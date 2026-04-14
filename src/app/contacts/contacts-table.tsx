@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -13,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Pencil } from "lucide-react";
+import { Loader2, Pencil, Trash2 } from "lucide-react";
 import { GenerateButton } from "./generate-button";
 import { EditContactDialog } from "./edit-contact-dialog";
 
@@ -26,6 +27,17 @@ const statusColors: Record<string, string> = {
   UNSUBSCRIBED: "bg-gray-100 text-gray-800",
 };
 
+async function readApiError(res: Response) {
+  try {
+    const data = (await res.json()) as { error?: string; details?: string };
+    if (data?.error) return data.error;
+    if (data?.details) return data.details;
+  } catch {
+    // ignore parse errors
+  }
+  return `Request failed (${res.status})`;
+}
+
 interface Contact {
   id: string;
   firstName: string;
@@ -37,8 +49,10 @@ interface Contact {
 }
 
 export function ContactsTable({ contacts }: { contacts: Contact[] }) {
+  const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const allSelected = contacts.length > 0 && selected.size === contacts.length;
   const someSelected = selected.size > 0 && selected.size < contacts.length;
@@ -62,6 +76,33 @@ export function ContactsTable({ contacts }: { contacts: Contact[] }) {
 
   const selectedIds = Array.from(selected);
 
+  async function handleDeleteSelected() {
+    if (selectedIds.length === 0) return;
+    if (
+      !confirm(
+        `Delete ${selectedIds.length} contact${selectedIds.length > 1 ? "s" : ""}? Related drafts and activities will be removed. This cannot be undone.`
+      )
+    ) {
+      return;
+    }
+    setDeleting(true);
+    try {
+      for (const id of selectedIds) {
+        const res = await fetch(`/api/contacts/${id}`, { method: "DELETE" });
+        if (!res.ok) {
+          alert(await readApiError(res));
+          return;
+        }
+      }
+      setSelected(new Set());
+      router.refresh();
+    } catch {
+      alert("Delete failed");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   return (
     <>
       {selected.size > 0 && (
@@ -70,6 +111,20 @@ export function ContactsTable({ contacts }: { contacts: Contact[] }) {
             {selected.size} contact{selected.size > 1 ? "s" : ""} selected
           </span>
           <GenerateButton contactIds={selectedIds} disabled={false} />
+          <Button
+            type="button"
+            variant="destructive"
+            size="sm"
+            disabled={deleting}
+            onClick={handleDeleteSelected}
+          >
+            {deleting ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Trash2 className="mr-2 h-4 w-4" />
+            )}
+            Delete
+          </Button>
           <button
             onClick={() => setSelected(new Set())}
             className="text-xs text-muted-foreground hover:text-foreground ml-auto"
