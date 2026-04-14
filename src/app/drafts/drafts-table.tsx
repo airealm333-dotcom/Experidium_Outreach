@@ -46,6 +46,17 @@ const statusColors: Record<string, string> = {
   SENT: "bg-blue-100 text-blue-800",
 };
 
+async function readApiError(res: Response) {
+  try {
+    const data = (await res.json()) as { error?: string; details?: string };
+    if (data?.error) return data.error;
+    if (data?.details) return data.details;
+  } catch {
+    // ignore parse errors
+  }
+  return `Request failed (${res.status})`;
+}
+
 export function DraftsTable({ drafts }: { drafts: Draft[] }) {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
@@ -62,11 +73,15 @@ export function DraftsTable({ drafts }: { drafts: Draft[] }) {
   async function handleAction(id: string, status: string) {
     setLoading(id);
     try {
-      await fetch(`/api/drafts/${id}`, {
+      const res = await fetch(`/api/drafts/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
       });
+      if (!res.ok) {
+        alert(await readApiError(res));
+        return;
+      }
       router.refresh();
     } catch {
       alert("Action failed");
@@ -78,11 +93,15 @@ export function DraftsTable({ drafts }: { drafts: Draft[] }) {
   async function handleBulkApprove() {
     setBulkLoading(true);
     try {
-      await fetch("/api/drafts/bulk", {
+      const res = await fetch("/api/drafts/bulk", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "APPROVED" }),
       });
+      if (!res.ok) {
+        alert(await readApiError(res));
+        return;
+      }
       router.refresh();
     } catch {
       alert("Bulk approve failed");
@@ -95,7 +114,11 @@ export function DraftsTable({ drafts }: { drafts: Draft[] }) {
     if (!confirm(`Delete all ${drafts.length} drafts? This cannot be undone.`)) return;
     setClearing(true);
     try {
-      await fetch("/api/drafts/bulk", { method: "DELETE" });
+      const res = await fetch("/api/drafts/bulk", { method: "DELETE" });
+      if (!res.ok) {
+        alert(await readApiError(res));
+        return;
+      }
       router.refresh();
     } catch {
       alert("Failed to clear drafts");
@@ -108,7 +131,7 @@ export function DraftsTable({ drafts }: { drafts: Draft[] }) {
     if (!editDraft) return;
     setLoading(editDraft.id);
     try {
-      await fetch(`/api/drafts/${editDraft.id}`, {
+      const res = await fetch(`/api/drafts/${editDraft.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -117,6 +140,10 @@ export function DraftsTable({ drafts }: { drafts: Draft[] }) {
           status: "APPROVED",
         }),
       });
+      if (!res.ok) {
+        alert(await readApiError(res));
+        return;
+      }
       setEditDraft(null);
       router.refresh();
     } catch {

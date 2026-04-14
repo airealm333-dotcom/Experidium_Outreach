@@ -19,6 +19,8 @@ import { Send } from "lucide-react";
 import { format } from "date-fns";
 import { SendActions } from "./send-actions";
 
+export const dynamic = "force-dynamic";
+
 interface DraftItem {
   id: string;
   subject: string;

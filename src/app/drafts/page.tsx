@@ -10,6 +10,8 @@ import {
 import { FileEdit } from "lucide-react";
 import { DraftsTable } from "./drafts-table";
 
+export const dynamic = "force-dynamic";
+
 interface DraftWithContact {
   id: string;
   subject: string;
