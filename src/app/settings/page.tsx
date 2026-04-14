@@ -49,32 +49,32 @@ export default async function SettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <div>
+            <div className="flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
                 <p className="text-sm font-medium">Groq AI (Llama 3.3 70B)</p>
                 <p className="text-xs text-muted-foreground">
                   GROQ_API_KEY
                 </p>
               </div>
-              <Badge variant={hasGroq ? "default" : "secondary"}>
+              <Badge className="w-fit shrink-0" variant={hasGroq ? "default" : "secondary"}>
                 {hasGroq ? "Configured" : "Not Set"}
               </Badge>
             </div>
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <div>
+            <div className="flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
                 <p className="text-sm font-medium">Resend (Email)</p>
                 <p className="text-xs text-muted-foreground">RESEND_API_KEY</p>
               </div>
-              <Badge variant={hasResend ? "default" : "secondary"}>
+              <Badge className="w-fit shrink-0" variant={hasResend ? "default" : "secondary"}>
                 {hasResend ? "Configured" : "Not Set"}
               </Badge>
             </div>
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <div>
+            <div className="flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
                 <p className="text-sm font-medium">Database</p>
                 <p className="text-xs text-muted-foreground">DATABASE_URL</p>
               </div>
-              <Badge variant={hasDb ? "default" : "secondary"}>
+              <Badge className="w-fit shrink-0" variant={hasDb ? "default" : "secondary"}>
                 {hasDb ? "Configured" : "Not Set"}
               </Badge>
             </div>

@@ -77,16 +77,16 @@ export default async function ContactsPage({
         <GenerateButton contactIds={allContactIds} disabled={contacts.length === 0} label="Generate All" />
       </PageHeader>
 
-      <Card>
+      <Card className="min-w-0 overflow-hidden">
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
               <CardTitle>All Contacts</CardTitle>
               <CardDescription>
                 Manage your leads and prospects — select contacts to generate emails
               </CardDescription>
             </div>
-            <form className="relative w-72">
+            <form className="relative w-full min-w-0 sm:max-w-xs md:w-72 md:max-w-none">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 name="q"
@@ -97,7 +97,7 @@ export default async function ContactsPage({
             </form>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="min-w-0">
           {contacts.length === 0 ? (
             <div className="py-12 text-center">
               <Users className="mx-auto h-12 w-12 text-muted-foreground/50" />

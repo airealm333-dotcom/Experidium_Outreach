@@ -133,12 +133,12 @@ export function SendActions({ drafts }: { drafts: DraftItem[] }) {
   const isBusy = sending;
 
   return (
-    <Card>
+    <Card className="min-w-0 overflow-hidden">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
             <CardTitle className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
+              <Clock className="h-4 w-4 shrink-0" />
               Ready to Send
             </CardTitle>
             <CardDescription className="mt-1">
@@ -146,7 +146,7 @@ export function SendActions({ drafts }: { drafts: DraftItem[] }) {
             </CardDescription>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-shrink-0 flex-wrap items-center justify-end gap-2">
             {selected.size > 0 && (
               <Button
                 size="sm"
@@ -177,7 +177,7 @@ export function SendActions({ drafts }: { drafts: DraftItem[] }) {
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="min-w-0">
         {status && (
           <div
             className={`flex items-center gap-2 mb-4 p-3 rounded-lg border text-sm font-medium ${

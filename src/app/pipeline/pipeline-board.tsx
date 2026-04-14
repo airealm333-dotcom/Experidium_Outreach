@@ -105,11 +105,11 @@ export function PipelineBoard({
 
   return (
     <>
-      <div className="flex gap-4 overflow-x-auto pb-4">
+      <div className="-mx-1 flex min-w-0 gap-4 overflow-x-auto pb-4 px-1 snap-x snap-mandatory md:snap-none">
         {stages.map((stage) => (
           <div
             key={stage.id}
-            className="flex w-72 shrink-0 flex-col rounded-lg border bg-muted/30"
+            className="flex w-[min(18rem,calc(100vw-3rem))] shrink-0 snap-start flex-col rounded-lg border bg-muted/30 sm:w-72"
             onDragOver={(e) => e.preventDefault()}
             onDrop={() => handleDrop(stage.id)}
           >

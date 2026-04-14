@@ -45,7 +45,7 @@ export default async function AnalyticsPage({
             </Button>
           </Link>
         ))}
-        <form action="/analytics" className="ml-2 flex flex-wrap items-center gap-2">
+        <form action="/analytics" className="flex w-full flex-wrap items-center gap-2 sm:ml-2 sm:w-auto">
           <input type="hidden" name="range" value="custom" />
           <input
             name="from"
@@ -159,7 +159,7 @@ export default async function AnalyticsPage({
                       <span className="font-medium">{row.domain}</span>
                       <span className="text-xs text-muted-foreground">{row.sent} sent</span>
                     </div>
-                    <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div className="grid grid-cols-1 gap-1 text-xs sm:grid-cols-3 sm:gap-2">
                       <span>Opened: {row.opened}</span>
                       <span className="text-red-600">Bounced: {row.bounced}</span>
                       <span className="text-orange-600">Complained: {row.complained}</span>
@@ -199,7 +199,7 @@ export default async function AnalyticsPage({
             <CardDescription>Deal value and close quality</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="rounded-md border p-3">
                 <p className="text-xs text-muted-foreground">Won Value</p>
                 <p className="text-xl font-semibold">${stats.deals.wonValue.toLocaleString()}</p>

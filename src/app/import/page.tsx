@@ -197,19 +197,19 @@ export default function ImportPage() {
                 {headers.map((header) => (
                   <div
                     key={header}
-                    className="flex items-center gap-4 rounded-lg border p-3"
+                    className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:gap-4"
                   >
-                    <span className="w-48 truncate text-sm font-medium">
+                    <span className="min-w-0 truncate text-sm font-medium sm:w-48 sm:shrink-0">
                       {header}
                     </span>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <ArrowRight className="hidden h-4 w-4 shrink-0 text-muted-foreground sm:block" />
                     <Select
                       value={mappings[header] || "skip"}
                       onValueChange={(val) =>
                         setMappings((prev) => ({ ...prev, [header]: val ?? "skip" }))
                       }
                     >
-                      <SelectTrigger className="w-64">
+                      <SelectTrigger className="w-full sm:w-64">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>

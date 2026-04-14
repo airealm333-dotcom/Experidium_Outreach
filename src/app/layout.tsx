@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Sidebar } from "@/components/sidebar";
+import { MobileNav } from "@/components/mobile-nav";
 import "./globals.css";
 
 const inter = Inter({
@@ -32,8 +33,9 @@ export default function RootLayout({
       <body className="min-h-full bg-background">
         <TooltipProvider>
           <Sidebar />
-          <main className="pl-64">
-            <div className="px-8 py-8">{children}</div>
+          <MobileNav />
+          <main className="min-h-full pt-14 md:pt-0 md:pl-64">
+            <div className="px-4 py-6 sm:px-6 lg:px-8 md:py-8">{children}</div>
           </main>
         </TooltipProvider>
       </body>
