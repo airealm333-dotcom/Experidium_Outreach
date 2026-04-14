@@ -173,7 +173,7 @@ export function EditContactDialog({
 
           <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
-            <Select value={form.status} onValueChange={(v) => update("status", v)}>
+            <Select value={form.status} onValueChange={(v) => update("status", v ?? form.status)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>

@@ -84,7 +84,7 @@ export function ContactsTable({ contacts }: { contacts: Contact[] }) {
           <TableRow>
             <TableHead className="w-10">
               <Checkbox
-                checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                checked={allSelected || someSelected}
                 onCheckedChange={toggleAll}
                 aria-label="Select all"
               />

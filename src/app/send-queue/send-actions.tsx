@@ -222,9 +222,7 @@ export function SendActions({ drafts }: { drafts: DraftItem[] }) {
                 <TableRow>
                   <TableHead className="w-10">
                     <Checkbox
-                      checked={
-                        allSelected ? true : someSelected ? ("indeterminate" as const) : false
-                      }
+                      checked={allSelected || someSelected}
                       onCheckedChange={toggleAll}
                       aria-label="Select all"
                     />
