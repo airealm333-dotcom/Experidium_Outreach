@@ -1,0 +1,620 @@
+{
+  "name": "Before_OutReach",
+  "nodes": [
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1iu18KiFQAY8Jte828pRkOBjTr-joEmNXEpKGOvDO2_M",
+          "mode": "list",
+          "cachedResultName": "Leads Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iu18KiFQAY8Jte828pRkOBjTr-joEmNXEpKGOvDO2_M/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iu18KiFQAY8Jte828pRkOBjTr-joEmNXEpKGOvDO2_M/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        288,
+        -48
+      ],
+      "id": "66171537-6dbf-40c3-b963-88daefe9473a",
+      "name": "leads_data",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "iNEKnUzebqdFx3Yi",
+          "name": "Vishnu"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "14WlQC5e01vKRi3EutAaX5SecZYkqZnBQwvEB7v6lnI4",
+          "mode": "list",
+          "cachedResultName": "Google_jobs_data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/14WlQC5e01vKRi3EutAaX5SecZYkqZnBQwvEB7v6lnI4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Job scrap",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/14WlQC5e01vKRi3EutAaX5SecZYkqZnBQwvEB7v6lnI4/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Company_name",
+              "lookupValue": "={{ $json.Company_name }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        784,
+        -112
+      ],
+      "id": "c3bf2a13-278b-4f4d-93b8-1059e33fe161",
+      "name": "Google_jobs",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "iNEKnUzebqdFx3Yi",
+          "name": "Vishnu"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "fc7333f3-b343-4ee8-bdbc-558ae0c64793",
+              "leftValue": "={{ $json.Status }}",
+              "rightValue": "generated",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1008,
+        -112
+      ],
+      "id": "416ce37a-4b28-40a0-9c05-f5c97683f5fa",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        560,
+        -48
+      ],
+      "id": "91f726fb-e21a-41ca-baf3-49b40535e33a",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-5.1",
+          "mode": "list",
+          "cachedResultName": "GPT-5.1"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=Role:\nYou are a specialized Cold Emailing Agent for a recruiting agency. Your primary focus is crafting high-converting email subject lines and concise email bodies for hiring leads.\n\nTask:\nWrite a short, no-fluff cold email (under 100 words).\n\nContext:\nLead Name: {{ $('Loop Over Items').item.json['Full Name'] }}\nCompany: {{ $('Loop Over Items').item.json.Company_name }}\nJob Title: {{ $('Loop Over Items1').item.json.Title }}\nJob Description: {{ $('Google_jobs').item.json.Description }}\n\nInstructions:\n1. Analyze the Job Description and identify the top 2 most critical skills or requirements.\n2. Reference those skills clearly in the email to demonstrate understanding.\n3. Mention that our agency has a pre-vetted pipeline of candidates matching these exact requirements.\n4. Keep the tone professional, direct, and helpful.\n5. Keep the body under 100 words.\n6. End with a strong CTA requesting a 5-minute chat.\n7. Avoid fluff, buzzwords, or generic statements.\n\nOutput format:\n\nSubject: <subject line>\n\nBody:\n<email body>\n"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        1664,
+        -48
+      ],
+      "id": "0844a86f-cef9-44b8-ba2a-17c03462f944",
+      "name": "Email agent",
+      "credentials": {
+        "openAiApi": {
+          "id": "kCOvbdKOGYpmbhtj",
+          "name": "Solvix_OpenAI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const outputArray = $input.item.json.output;\n\nif (outputArray && outputArray.length > 0) {\n  // Accessing the text: output[0] -> content[0] -> text\n  const rawText = outputArray[0].content[0].text;\n\n  // 1. Extract Subject\n  const subjectMatch = rawText.match(/Subject:\\s*(.*)/i);\n  const subject = subjectMatch ? subjectMatch[1].trim() : \"No Subject Found\";\n\n  // 2. Extract Body (everything after \"Body:\")\n  const bodyMatch = rawText.match(/Body:\\s*([\\s\\S]*)/i);\n  const body = bodyMatch ? bodyMatch[1].trim() : \"No Body Found\";\n\n  return [{\n    json: {\n      email_subject: subject,\n      email_body: body\n    }\n  }];\n}\n\nreturn [];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2064,
+        -32
+      ],
+      "id": "58d44fde-bf19-47e3-9ae7-2fa0546beec9",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1WPl1j7j9z8p-J_1xvneGnNymBLe0BJFp5DZ9HUVghtg",
+          "mode": "list",
+          "cachedResultName": "Outreach",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1WPl1j7j9z8p-J_1xvneGnNymBLe0BJFp5DZ9HUVghtg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Before",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1WPl1j7j9z8p-J_1xvneGnNymBLe0BJFp5DZ9HUVghtg/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Contact ID": "={{ $json.contact_id }}",
+            "Subject": "={{ $json.email_subject }}",
+            "Body": "={{ $json.email_body }}",
+            "Linkedin_URL": "={{ $('Loop Over Items').item.json.Linkedin_url }}",
+            "Name": "={{ $('Loop Over Items').item.json['Full Name'] }}",
+            "Email": "=",
+            "Comapny": "={{ $('If').item.json.Company_name }}",
+            "status": "not outreach",
+            "Job Title": "={{ $('Loop Over Items1').item.json.Title }}",
+            "First name": "={{ $('Loop Over Items').item.json['First Name'] }}",
+            "Last name": "={{ $('Loop Over Items').item.json['Last Name'] }}",
+            "Position": "={{ $('Loop Over Items').item.json['Position'] }}",
+            "Seniority": "={{ $('Loop Over Items').item.json['Seniority'] }}",
+            "Country": "={{ $('Loop Over Items').item.json['Country'] }}",
+            "State": "={{ $('Loop Over Items').item.json['State'] }}",
+            "Company_name": "={{ $('Loop Over Items').item.json['Company_name'] }}",
+            "Org_Size": "={{ $('Loop Over Items').item.json['Org_Size'] }}",
+            "Org_Website": "={{ $('Loop Over Items').item.json['Org_Website'] }}",
+            "Org_linkedin_url": "={{ $('Loop Over Items').item.json['Org_linkedin_url'] }}",
+            "Org_industry": "={{ $('Loop Over Items').item.json['Org_industry'] }}",
+            "Org_description": "={{ $('Loop Over Items').item.json['Org_description'] }}",
+            "Org_Country": "={{ $('Loop Over Items').item.json['Org_Country'] }}",
+            "Org_State": "={{ $('Loop Over Items').item.json['Org_State'] }}"
+          },
+          "matchingColumns": [
+            "Contact ID"
+          ],
+          "schema": [
+            {
+              "id": "First name",
+              "displayName": "First name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Last name",
+              "displayName": "Last name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Comapny",
+              "displayName": "Comapny",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Job Title",
+              "displayName": "Job Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Body",
+              "displayName": "Body",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Contact ID",
+              "displayName": "Contact ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Linkedin_URL",
+              "displayName": "Linkedin_URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Position",
+              "displayName": "Position",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Seniority",
+              "displayName": "Seniority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Country",
+              "displayName": "Country",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "State",
+              "displayName": "State",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company_name",
+              "displayName": "Company_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Org_Size",
+              "displayName": "Org_Size",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Org_Website",
+              "displayName": "Org_Website",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Org_linkedin_url",
+              "displayName": "Org_linkedin_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Org_industry",
+              "displayName": "Org_industry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Org_description",
+              "displayName": "Org_description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Org_Country",
+              "displayName": "Org_Country",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Org_State",
+              "displayName": "Org_State",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2304,
+        -32
+      ],
+      "id": "cc78f99c-1a92-483c-ac62-4ed7499107ea",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "iNEKnUzebqdFx3Yi",
+          "name": "Vishnu"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1360,
+        -64
+      ],
+      "id": "c98c06bf-1673-4547-bd3b-0295eb584012",
+      "name": "Loop Over Items1"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 10
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "d5138d94-2ff6-45c2-952c-82b8d9760750",
+      "name": "Schedule Trigger"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google_jobs": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "leads_data": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Google_jobs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email agent": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Email agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "leads_data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "f1396eb7-0336-4863-b586-46a6ca80e4d7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7bb208172ef50671fe73076ca95e838d0e8494727e955a37454e72bf45d0ae4c"
+  },
+  "id": "ly_sG6MlVf5bTauraR_M7",
+  "tags": []
+}

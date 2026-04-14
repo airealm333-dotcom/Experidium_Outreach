@@ -1,0 +1,1185 @@
+{
+  "name": "leadgen",
+  "nodes": [
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "14WlQC5e01vKRi3EutAaX5SecZYkqZnBQwvEB7v6lnI4",
+          "mode": "list",
+          "cachedResultName": "Google_jobs_data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/14WlQC5e01vKRi3EutAaX5SecZYkqZnBQwvEB7v6lnI4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Job scrap",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/14WlQC5e01vKRi3EutAaX5SecZYkqZnBQwvEB7v6lnI4/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -592,
+        -32
+      ],
+      "id": "dbb17ebe-6e94-4e21-ac15-982c0b969d63",
+      "name": "Get row",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "iNEKnUzebqdFx3Yi",
+          "name": "Vishnu"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "2e01c633-2357-4484-8c5f-dd4f0d3efd84",
+              "leftValue": "={{ $json.Status }}",
+              "rightValue": "Waiting",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -400,
+        -32
+      ],
+      "id": "76551bfe-85c6-40cc-95ca-f3d948d91cb8",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -144,
+        -16
+      ],
+      "id": "8fd996c0-1e11-4c89-9285-aaee241c2449",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1iu18KiFQAY8Jte828pRkOBjTr-joEmNXEpKGOvDO2_M",
+          "mode": "list",
+          "cachedResultName": "Leads Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iu18KiFQAY8Jte828pRkOBjTr-joEmNXEpKGOvDO2_M/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iu18KiFQAY8Jte828pRkOBjTr-joEmNXEpKGOvDO2_M/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Full Name": "={{ $json.person.name }}",
+            "First name": "={{ $json.person.first_name }}",
+            "Last name": "={{ $json.person.last_name }}",
+            "Email": "={{ $json.person.email }}",
+            "Linkedin_url": "={{ $json.person.linkedin_url }}",
+            "Position": "={{ $json.person.title }}",
+            "Country": "={{ $json.person.country }}",
+            "State": "={{ $json.person.state }}",
+            "Org_Size": "={{ $json.person.organization.estimated_num_employees }}",
+            "Org_Website": "={{ $json.person.organization.website_url }}",
+            "Org_linkedin_url": "={{ $json.person.organization.linkedin_url }}",
+            "Org_industry": "={{ $json.person.organization.industry }}",
+            "Org_description": "={{ $json.person.organization.short_description }}",
+            "Org_Country": "={{ $json.person.organization.country }}",
+            "Org_State": "={{ $json.person.organization.state }}",
+            "Company_name": "={{ $json.person.organization.name }}"
+          },
+          "matchingColumns": [
+            "Email"
+          ],
+          "schema": [
+            {
+              "id": "Full Name",
+              "displayName": "Full Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "First name",
+              "displayName": "First name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Last name",
+              "displayName": "Last name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Linkedin_url",
+              "displayName": "Linkedin_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Position",
+              "displayName": "Position",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Seniority",
+              "displayName": "Seniority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Country",
+              "displayName": "Country",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "State",
+              "displayName": "State",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company_name",
+              "displayName": "Company_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Org_Size",
+              "displayName": "Org_Size",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Org_Website",
+              "displayName": "Org_Website",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Org_linkedin_url",
+              "displayName": "Org_linkedin_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Org_industry",
+              "displayName": "Org_industry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Org_description",
+              "displayName": "Org_description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Org_Country",
+              "displayName": "Org_Country",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Org_State",
+              "displayName": "Org_State",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1472,
+        96
+      ],
+      "id": "1116a627-d3d2-432a-8812-e94e3ebcae1e",
+      "name": "Leads Data",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "iNEKnUzebqdFx3Yi",
+          "name": "Vishnu"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "people",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        400,
+        0
+      ],
+      "id": "3ff4eccd-3ead-49f9-8d8c-ca0e91d082bd",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apollo.io/api/v1/mixed_people/api_search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"q_organization_name\": \"{{ $json.Company_name }}\",\n  \"person_locations\": [\"Singapore\"],\n  \"person_titles\": [\n    \"Director\", \"Founder\", \"Co-Founder\", \n    \"Human Resources Manager\", \"CEO & Founder\", \n    \"Director Of Talent Acquisition\"\n  ],\n  \"prospective_full_enrichment\": false,\n  \"reveal_personal_emails\": false, \n  \"page\": 1,\n  \"per_page\": 5\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        160,
+        0
+      ],
+      "id": "e192c154-5e5e-43a4-a6b8-ba1fadbbb4ef",
+      "name": "Apollo people search",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "o9NekJyXgwIpAgwG",
+          "name": "Solvix_Apollo"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apollo.io/api/v1/people/match",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"first_name\": \"{{ $json.first_name }}\",\n  \"last_name\": \"{{ $json.last_name_obfuscated }}\",\n  \"id\": \"{{ $json.id }}\",\n  \"organization_name\": \"{{ $json.organization.name }}\",\n  \"reveal_merged_leaf_data\": true\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        640,
+        0
+      ],
+      "id": "77a3acee-f8f1-4c6c-be84-7ded5dcd326d",
+      "name": "Apollo People enrich",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "o9NekJyXgwIpAgwG",
+          "name": "Solvix_Apollo"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "26b6f1e9-3a0c-4f47-9c58-4396270519ec",
+              "leftValue": "{{ $json.person.email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        880,
+        0
+      ],
+      "id": "b00a2492-988d-4709-898b-cc54c2be6877",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "bd3cbb3a-4fb1-4ad2-b687-0d4e76d67cb4",
+              "leftValue": "={{ $json.person.organization.estimated_num_employees }}",
+              "rightValue": 1000,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1120,
+        80
+      ],
+      "id": "9f553802-6db3-475f-82d8-950c73297694",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "14WlQC5e01vKRi3EutAaX5SecZYkqZnBQwvEB7v6lnI4",
+          "mode": "list",
+          "cachedResultName": "Google_jobs_data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/14WlQC5e01vKRi3EutAaX5SecZYkqZnBQwvEB7v6lnI4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Job scrap",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/14WlQC5e01vKRi3EutAaX5SecZYkqZnBQwvEB7v6lnI4/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Job_id": "={{ $('Loop Over Items').item.json.Job_id }}",
+            "Status": "generated"
+          },
+          "matchingColumns": [
+            "Job_id"
+          ],
+          "schema": [
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Company_name",
+              "displayName": "Company_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Salary",
+              "displayName": "Salary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Is_Remote",
+              "displayName": "Is_Remote",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Job_type",
+              "displayName": "Job_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Link_to_apply",
+              "displayName": "Link_to_apply",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Job posted on",
+              "displayName": "Job posted on",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "updated date",
+              "displayName": "updated date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Job_location",
+              "displayName": "Job_location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Via",
+              "displayName": "Via",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Description",
+              "displayName": "Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Job_id",
+              "displayName": "Job_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Search_location",
+              "displayName": "Search_location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        944,
+        288
+      ],
+      "id": "8f50a767-6edc-4416-b36c-a1af6d0f8d0f",
+      "name": "append",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "iNEKnUzebqdFx3Yi",
+          "name": "Vishnu"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "14WlQC5e01vKRi3EutAaX5SecZYkqZnBQwvEB7v6lnI4",
+          "mode": "list",
+          "cachedResultName": "Google_jobs_data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/14WlQC5e01vKRi3EutAaX5SecZYkqZnBQwvEB7v6lnI4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Job scrap",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/14WlQC5e01vKRi3EutAaX5SecZYkqZnBQwvEB7v6lnI4/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Job_id": "={{ $('Loop Over Items').item.json.Job_id }}",
+            "Status": "generated"
+          },
+          "matchingColumns": [
+            "Job_id"
+          ],
+          "schema": [
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Company_name",
+              "displayName": "Company_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Salary",
+              "displayName": "Salary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Is_Remote",
+              "displayName": "Is_Remote",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Job_type",
+              "displayName": "Job_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Link_to_apply",
+              "displayName": "Link_to_apply",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Job posted on",
+              "displayName": "Job posted on",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "updated date",
+              "displayName": "updated date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Job_location",
+              "displayName": "Job_location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Via",
+              "displayName": "Via",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Description",
+              "displayName": "Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Job_id",
+              "displayName": "Job_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Search_location",
+              "displayName": "Search_location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1280,
+        320
+      ],
+      "id": "5504f9a5-78d1-41e8-b09d-bea78ac48f7a",
+      "name": "append sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "iNEKnUzebqdFx3Yi",
+          "name": "Vishnu"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "14WlQC5e01vKRi3EutAaX5SecZYkqZnBQwvEB7v6lnI4",
+          "mode": "list",
+          "cachedResultName": "Google_jobs_data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/14WlQC5e01vKRi3EutAaX5SecZYkqZnBQwvEB7v6lnI4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Job scrap",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/14WlQC5e01vKRi3EutAaX5SecZYkqZnBQwvEB7v6lnI4/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Job_id": "={{ $('Loop Over Items').item.json.Job_id }}",
+            "Status": "generated"
+          },
+          "matchingColumns": [
+            "Job_id"
+          ],
+          "schema": [
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Company_name",
+              "displayName": "Company_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Salary",
+              "displayName": "Salary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Is_Remote",
+              "displayName": "Is_Remote",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Job_type",
+              "displayName": "Job_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Link_to_apply",
+              "displayName": "Link_to_apply",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Job posted on",
+              "displayName": "Job posted on",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "updated date",
+              "displayName": "updated date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Job_location",
+              "displayName": "Job_location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Via",
+              "displayName": "Via",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Description",
+              "displayName": "Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Job_id",
+              "displayName": "Job_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Search_location",
+              "displayName": "Search_location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1728,
+        112
+      ],
+      "id": "effdd967-05a4-4817-8919-fd04eee3948e",
+      "name": "append status",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "iNEKnUzebqdFx3Yi",
+          "name": "Vishnu"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -816,
+        -32
+      ],
+      "id": "3a8a12a5-a2a5-4c3c-a339-bba63d89b987",
+      "name": "Schedule Trigger"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get row": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Apollo people search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leads Data": {
+      "main": [
+        [
+          {
+            "node": "append status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apollo people search": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Apollo People enrich",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apollo People enrich": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "append",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Leads Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "append sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "append": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "append status": {
+      "main": [
+        []
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "f2453481-ecfa-4e1b-9727-d5ab43b4294d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7bb208172ef50671fe73076ca95e838d0e8494727e955a37454e72bf45d0ae4c"
+  },
+  "id": "BqLJA82h3fzrkYQNmymel",
+  "tags": []
+}

@@ -1,0 +1,426 @@
+{
+  "name": "outreach_mail",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apollo.io/v1/people/match",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"email\": \"{{ $('Loop Over Items').item.json.Email }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        336,
+        -160
+      ],
+      "id": "5a76fe76-3242-4352-8aca-546413f6e802",
+      "name": "HTTP Request1",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "o9NekJyXgwIpAgwG",
+          "name": "Solvix_Apollo"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.apollo.io/v1/emailer_campaigns/698de9ac1b8ca9000dbc0857/add_contact_ids",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contact_ids\": [\"{{ $json.contact_id }}\"],\n  \"emailer_campaign_id\": \"698de9ac1b8ca9000dbc0857\",\n  \"send_email_from_email_account_id\": \"68fc45272ff79a001995609f\",\n  \"typed_custom_fields\": {\n    \"job_title\": \"ww\",\n    \"6992be45e2bdb60019f14b6d\": {{ JSON.stringify($json.email_body) }},\n    \"6992be14ce61810019bb7e07\": {{ JSON.stringify($json.email_subject) }}\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        992,
+        -160
+      ],
+      "id": "7f0a75fc-3388-4422-b1d8-0d2cdf3c3d20",
+      "name": "apollo outreach",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "o9NekJyXgwIpAgwG",
+          "name": "Solvix_Apollo"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apollo.io/api/v1/contacts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\nJSON.stringify({\n  \"person_id\": $json.person.id,\n  \"email\": $json.person.email,\n  \"name\": $json.person.name,\n  \"typed_custom_fields\": {\n    \"job_title\": $(\"Loop Over Items\").item.json.Title,\n    \"6992be45e2bdb60019f14b6d\": $(\"Loop Over Items\").item.json.Body,\n    \"6992be14ce61810019bb7e07\": $(\"Loop Over Items\").item.json.Subject\n  }\n})\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        592,
+        -160
+      ],
+      "id": "768f6272-53f4-4703-865d-6883ccdc91e7",
+      "name": "create contact",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "o9NekJyXgwIpAgwG",
+          "name": "Solvix_Apollo"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bfd47cff-eece-4cc4-a79e-387466bc206b",
+              "name": "contact_id",
+              "value": "={{ $json.contact.id }}",
+              "type": "string"
+            },
+            {
+              "id": "9cc35bec-d6c5-401c-9f77-7d31e47e2bb5",
+              "name": "email_subject",
+              "value": "={{ $('Loop Over Items').item.json.Subject }}",
+              "type": "string"
+            },
+            {
+              "id": "6568beff-766c-4977-9c31-5bd3a7b2c73f",
+              "name": "email_body",
+              "value": "={{ $('Loop Over Items').item.json.Body }}",
+              "type": "string"
+            },
+            {
+              "id": "1b424a65-8ea3-4d0b-9925-8c6d59609cea",
+              "name": "job title",
+              "value": "={{ $('Loop Over Items').item.json['Job Title'] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        784,
+        -160
+      ],
+      "id": "34826987-a8ea-44b1-8f6c-6f19ef9af365",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1WPl1j7j9z8p-J_1xvneGnNymBLe0BJFp5DZ9HUVghtg",
+          "mode": "list",
+          "cachedResultName": "Outreach",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1WPl1j7j9z8p-J_1xvneGnNymBLe0BJFp5DZ9HUVghtg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Before",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1WPl1j7j9z8p-J_1xvneGnNymBLe0BJFp5DZ9HUVghtg/edit#gid=0"
+        },
+        "event": "rowUpdate",
+        "options": {
+          "columnsToWatch": [
+            "status"
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        -416,
+        -112
+      ],
+      "id": "4b0fa042-0555-4a90-98e3-b552139f9fc5",
+      "name": "Google Sheets Trigger",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "grWXZUKIDXBcLahi",
+          "name": "Google Sheets Trigger account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6e127c27-1257-4aff-9ab4-1034e41aeda2",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "outreach",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -208,
+        -112
+      ],
+      "id": "96b47e18-2440-4c52-8dd5-0dd3a09afdd8",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        64,
+        -192
+      ],
+      "id": "9eb47826-ee65-40df-8ccf-c5c7f55de65f",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1WPl1j7j9z8p-J_1xvneGnNymBLe0BJFp5DZ9HUVghtg",
+          "mode": "list",
+          "cachedResultName": "Outreach",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1WPl1j7j9z8p-J_1xvneGnNymBLe0BJFp5DZ9HUVghtg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1839063346,
+          "mode": "list",
+          "cachedResultName": "Completed",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1WPl1j7j9z8p-J_1xvneGnNymBLe0BJFp5DZ9HUVghtg/edit#gid=1839063346"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $today.toFormat('MM/dd/yyyy') }}",
+            "Sending time": "={{ $now.format('hh:mm a') }}",
+            "Conatct ID": "={{ $('Edit Fields').item.json.contact_id }}",
+            "Name": "={{ $json.contacts[0].name }}",
+            "Email": "={{$json.contacts[0].contact_emails[0].email }}",
+            "Company": "={{ $('Loop Over Items').item.json.Comapny }}"
+          },
+          "matchingColumns": [
+            "Conatct ID"
+          ],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Conatct ID",
+              "displayName": "Conatct ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Sending time",
+              "displayName": "Sending time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1200,
+        -160
+      ],
+      "id": "3b0d8359-b8e4-4233-b7b3-f3817e932961",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "iNEKnUzebqdFx3Yi",
+          "name": "Vishnu"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "create contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create contact": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "apollo outreach",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets Trigger": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "apollo outreach": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "86fdd7c1-0519-4c71-85c2-b88c431e2048",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7bb208172ef50671fe73076ca95e838d0e8494727e955a37454e72bf45d0ae4c"
+  },
+  "id": "Djm2m539GMPi6rrxvUDJI",
+  "tags": []
+}
