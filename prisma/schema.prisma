@@ -1,0 +1,225 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// --- Companies ---
+
+model Company {
+  id          String    @id @default(cuid())
+  name        String
+  website     String?
+  linkedinUrl String?
+  industry    String?
+  description String?
+  employeeCount Int?
+  country     String?
+  state       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  contacts    Contact[]
+  deals       Deal[]
+
+  @@index([name])
+}
+
+// --- Contacts ---
+
+enum ContactStatus {
+  NEW
+  QUALIFIED
+  CONTACTED
+  REPLIED
+  BOUNCED
+  UNSUBSCRIBED
+}
+
+model Contact {
+  id          String        @id @default(cuid())
+  firstName   String
+  lastName    String
+  email       String        @unique
+  linkedinUrl String?
+  position    String?
+  seniority   String?
+  country     String?
+  state       String?
+  status      ContactStatus @default(NEW)
+  source      String?
+  tags        String[]
+
+  companyId   String?
+  company     Company?      @relation(fields: [companyId], references: [id])
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  activities  Activity[]
+  deals       Deal[]
+  emailDrafts EmailDraft[]
+  emailSends  EmailSend[]
+
+  @@index([email])
+  @@index([companyId])
+  @@index([status])
+}
+
+// --- Pipeline ---
+
+model PipelineStage {
+  id    String @id @default(cuid())
+  name  String @unique
+  order Int
+  color String @default("#6366f1")
+
+  deals Deal[]
+
+  @@index([order])
+}
+
+enum DealStatus {
+  OPEN
+  WON
+  LOST
+}
+
+model Deal {
+  id                String        @id @default(cuid())
+  title             String
+  value             Float?
+  expectedCloseDate DateTime?
+  status            DealStatus    @default(OPEN)
+
+  contactId         String
+  contact           Contact       @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  companyId         String?
+  company           Company?      @relation(fields: [companyId], references: [id])
+
+  stageId           String
+  stage             PipelineStage @relation(fields: [stageId], references: [id])
+
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([stageId])
+  @@index([contactId])
+  @@index([status])
+}
+
+// --- Activities (tasks, notes, email logs) ---
+
+enum ActivityType {
+  TASK
+  NOTE
+  EMAIL
+}
+
+model Activity {
+  id        String       @id @default(cuid())
+  type      ActivityType
+  subject   String?
+  body      String?
+  dueDate   DateTime?
+  completed Boolean      @default(false)
+
+  contactId String
+  contact   Contact      @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([contactId])
+  @@index([type])
+}
+
+// --- Email Templates ---
+
+model EmailTemplate {
+  id              String @id @default(cuid())
+  name            String
+  promptTemplate  String @db.Text
+  subjectTemplate String? @db.Text
+  bodyTemplate    String? @db.Text
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// --- Email Drafts (AI-generated, pending review) ---
+
+enum DraftStatus {
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+  SENT
+}
+
+model EmailDraft {
+  id          String      @id @default(cuid())
+  subject     String
+  body        String      @db.Text
+  status      DraftStatus @default(PENDING_REVIEW)
+  generatedBy String?
+
+  contactId   String
+  contact     Contact     @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  emailSend   EmailSend?
+
+  @@index([status])
+  @@index([contactId])
+}
+
+// --- Email Sends (actual sends via Resend) ---
+
+model EmailSend {
+  id              String   @id @default(cuid())
+  resendMessageId String?  @unique
+  fromAddress     String   @default("alex@experidium.online")
+  sentAt          DateTime @default(now())
+
+  draftId         String   @unique
+  draft           EmailDraft @relation(fields: [draftId], references: [id], onDelete: Cascade)
+
+  contactId       String
+  contact         Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  events          EmailEvent[]
+
+  @@index([contactId])
+  @@index([sentAt])
+}
+
+// --- Email Events (webhook data from Resend) ---
+
+enum EmailEventType {
+  DELIVERED
+  OPENED
+  CLICKED
+  BOUNCED
+  COMPLAINED
+}
+
+model EmailEvent {
+  id        String         @id @default(cuid())
+  type      EmailEventType
+  eventHash String?        @unique
+  payload   String?        @db.Text
+  timestamp DateTime       @default(now())
+
+  sendId    String
+  send      EmailSend      @relation(fields: [sendId], references: [id], onDelete: Cascade)
+
+  @@index([sendId])
+  @@index([type])
+  @@index([timestamp])
+}
