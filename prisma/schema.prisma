@@ -40,10 +40,11 @@ enum ContactStatus {
 }
 
 model Contact {
-  id          String        @id @default(cuid())
-  firstName   String
-  lastName    String
-  email       String        @unique
+  id              String        @id @default(cuid())
+  firstName       String
+  lastName        String
+  email           String        @unique
+  apolloPersonId  String?       @unique
   linkedinUrl String?
   position    String?
   seniority   String?
@@ -149,6 +150,16 @@ model EmailTemplate {
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+// --- App Settings (singleton) ---
+
+model AppSettings {
+  id                        String   @id
+  delayBetweenEmailsSeconds Int      @default(2)
+  maxEmailsPerDay           Int      @default(100)
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
 }
 
 // --- Email Drafts (AI-generated, pending review) ---

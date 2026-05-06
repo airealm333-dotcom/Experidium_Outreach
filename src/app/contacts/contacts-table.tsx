@@ -45,7 +45,27 @@ interface Contact {
   email: string;
   position: string | null;
   status: string;
+  source?: string | null;
+  apolloPersonId?: string | null;
   company: { name: string } | null;
+}
+
+function SourceCell({ contact }: { contact: Contact }) {
+  if (contact.source === "apollo-saved-search") {
+    return (
+      <Badge variant="secondary" className="bg-violet-100 text-violet-900 dark:bg-violet-950 dark:text-violet-100">
+        Apollo
+      </Badge>
+    );
+  }
+  if (contact.source?.trim()) {
+    return (
+      <span className="max-w-[8rem] truncate text-muted-foreground" title={contact.source}>
+        {contact.source}
+      </span>
+    );
+  }
+  return <span className="text-muted-foreground">—</span>;
 }
 
 export function ContactsTable({ contacts }: { contacts: Contact[] }) {
@@ -145,6 +165,7 @@ export function ContactsTable({ contacts }: { contacts: Contact[] }) {
               />
             </TableHead>
             <TableHead>Name</TableHead>
+            <TableHead>Source</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Company</TableHead>
             <TableHead>Position</TableHead>
@@ -173,7 +194,10 @@ export function ContactsTable({ contacts }: { contacts: Contact[] }) {
                   {contact.firstName} {contact.lastName}
                 </Link>
               </TableCell>
-              <TableCell className="text-muted-foreground">
+              <TableCell className="w-[1%] whitespace-nowrap">
+                <SourceCell contact={contact} />
+              </TableCell>
+              <TableCell className="text-muted-foreground max-w-[14rem] truncate" title={contact.email}>
                 {contact.email}
               </TableCell>
               <TableCell>{contact.company?.name ?? "—"}</TableCell>

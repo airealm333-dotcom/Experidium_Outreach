@@ -35,6 +35,24 @@ export async function POST(req: NextRequest) {
       include: { company: true },
     });
 
+    // Pull the most recent NOTE per contact (if any) so the prompt can use
+    // it via the {{recentNote}} placeholder. One round-trip for the whole
+    // batch instead of N queries.
+    const recentNotes = await prisma.activity.findMany({
+      where: {
+        contactId: { in: contacts.map((c) => c.id) },
+        type: "NOTE",
+      },
+      orderBy: [{ contactId: "asc" }, { createdAt: "desc" }],
+      select: { contactId: true, subject: true, body: true, createdAt: true },
+    });
+    const latestNoteByContact = new Map<string, string>();
+    for (const note of recentNotes) {
+      if (latestNoteByContact.has(note.contactId)) continue;
+      const text = [note.subject, note.body].filter(Boolean).join(" — ").trim();
+      if (text) latestNoteByContact.set(note.contactId, text);
+    }
+
     const results: { contactId: string; draftId: string; subject: string }[] = [];
     const errors: { contactId: string; name: string; error: string }[] = [];
 
@@ -56,7 +74,8 @@ export async function POST(req: NextRequest) {
         const prompt = buildPrompt(
           template.promptTemplate,
           contact,
-          contact.company
+          contact.company,
+          { recentNote: latestNoteByContact.get(contact.id) ?? null }
         );
 
         const { subject, body } = await generateEmailCopy(prompt);

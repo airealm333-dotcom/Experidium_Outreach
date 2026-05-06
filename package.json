@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "npx prisma generate && next dev",
     "build": "npx prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
@@ -11,6 +11,7 @@
     "db:push": "npx prisma db push",
     "db:seed": "npx tsx prisma/seed.ts",
     "db:studio": "npx prisma studio",
+    "db:clear": "npx tsx prisma/clear-all-data.ts",
     "db:setup": "npx prisma generate && npx prisma db push && npx tsx prisma/seed.ts"
   },
   "dependencies": {

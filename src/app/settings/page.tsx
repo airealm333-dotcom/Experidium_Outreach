@@ -10,15 +10,37 @@ import {
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { SettingsForm } from "./settings-form";
+import { SendPacingForm } from "./send-pacing-form";
 
 export default async function SettingsPage() {
   let promptTemplate = "";
+  let delayBetweenEmailsSeconds = 2;
+  let maxEmailsPerDay = 100;
 
   try {
-    const template = await prisma.emailTemplate.findFirst({
-      orderBy: { updatedAt: "desc" },
-    });
+    const prismaAny = prisma as unknown as Record<string, unknown>;
+    const appSettingsDelegate = prismaAny.appSettings as
+      | { findUnique: (args: { where: { id: string } }) => Promise<{ delayBetweenEmailsSeconds: number; maxEmailsPerDay: number } | null> }
+      | undefined;
+
+    const [template, appSettings] = await Promise.all([
+      prisma.emailTemplate.findFirst({
+        orderBy: { updatedAt: "desc" },
+      }),
+      appSettingsDelegate?.findUnique
+        ? appSettingsDelegate.findUnique({ where: { id: "default" } })
+        : Promise.resolve(null),
+    ]);
+
     promptTemplate = template?.promptTemplate || "";
+    const fallbackDelay = Number.parseInt(template?.subjectTemplate || "", 10);
+    const fallbackMaxPerDay = Number.parseInt(template?.bodyTemplate || "", 10);
+    delayBetweenEmailsSeconds =
+      appSettings?.delayBetweenEmailsSeconds ??
+      (Number.isFinite(fallbackDelay) ? fallbackDelay : delayBetweenEmailsSeconds);
+    maxEmailsPerDay =
+      appSettings?.maxEmailsPerDay ??
+      (Number.isFinite(fallbackMaxPerDay) ? fallbackMaxPerDay : maxEmailsPerDay);
   } catch {
     // DB not connected
   }
@@ -109,34 +131,10 @@ export default async function SettingsPage() {
 
         <SettingsForm initialPrompt={promptTemplate} />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Send Pacing</CardTitle>
-            <CardDescription>
-              Control sending speed for domain warm-up
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="text-sm font-medium">
-                Delay between emails (seconds)
-              </label>
-              <Input type="number" defaultValue="2" className="mt-1 w-32" />
-              <p className="text-xs text-muted-foreground mt-1">
-                Currently fixed at 2 seconds between sends in bulk mode
-              </p>
-            </div>
-            <div>
-              <label className="text-sm font-medium">
-                Max emails per day
-              </label>
-              <Input type="number" defaultValue="100" className="mt-1 w-32" />
-              <p className="text-xs text-muted-foreground mt-1">
-                Resend free tier: 100/day. Start with 5-10 for new domains.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <SendPacingForm
+          initialDelayBetweenEmailsSeconds={delayBetweenEmailsSeconds}
+          initialMaxEmailsPerDay={maxEmailsPerDay}
+        />
       </div>
     </>
   );

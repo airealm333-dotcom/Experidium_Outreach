@@ -1,0 +1,111 @@
+==============================================
+Job titles — paste into Apollo "Job Title" field
+================================================
+Primary buyer titles
+--------------------
+VP Supply Chain
+Director of Supply Chain
+VP of Operations
+Director of Operations
+Head of Supply Chain
+Supply Chain Director
+Chief Operating Officer
+COO
+
+Secondary / champion titles
+-------------------------
+Head of Procurement
+Procurement Manager
+Director of Procurement
+VP Procurement
+Inventory Manager
+Demand Planning Manager
+Logistics Manager
+IT Director
+CTO
+
+=======================================
+Company filters
+
+=======================================
+Revenue range
+---------------
+$10,000,000 – $100,000,000
+
+
+Employee headcount
+-----------------
+50 – 500
+
+Geography
+---------
+United States
+================================================
+Industries — paste into Apollo "Industry" filter
+================================================
+
+Target industries (include all)
+------------------------------
+Manufacturing
+Wholesale
+Import and Export
+Consumer Goods
+Industrial Machinery
+Food and Beverages
+Apparel and Fashion
+Plastics
+Electrical / Electronic Manufacturing
+Packaging and Containers
+Automotive
+Chemicals
+
+
+Exclude these industries
+------------------------
+Retail
+Management Consulting
+Staffing and Recruiting
+Software / SaaS
+Financial Services
+
+================================
+Technologies / Tech stack filter
+=================================
+
+ERP systems (highest priority)
+
+SAP
+SAP ECC
+SAP S/4HANA
+Oracle
+Oracle NetSuite
+NetSuite
+Microsoft Dynamics
+Microsoft Dynamics 365
+Epicor
+Infor
+JD Edwards
+
+
+
+====================================================
+Keywords — paste into Apollo "Keywords" / bio search
+====================================================
+
+Profile bio keywords
+
+
+
+supply chain
+procurement
+inventory management
+demand planning
+logistics
+operations management
+supplier management
+warehouse
+distribution
+OTIF
+S&OP
+ERP implementation
+

@@ -16,12 +16,12 @@ export function getResendClient(): Resend {
 export async function sendEmail({
   to,
   subject,
-  html,
+  text,
   from = "Alex <alex@experidium.online>",
 }: {
   to: string;
   subject: string;
-  html: string;
+  text: string;
   from?: string;
 }) {
   const resend = getResendClient();
@@ -30,7 +30,7 @@ export async function sendEmail({
     from,
     to,
     subject,
-    html,
+    text,
   });
 
   if (error) {

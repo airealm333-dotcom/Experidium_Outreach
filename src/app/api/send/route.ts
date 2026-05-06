@@ -2,91 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/resend";
 
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
-function isShortStandaloneLine(line: string): boolean {
-  const trimmed = line.trim();
-  if (!trimmed) return false;
-
-  if (/^(hi|hello|hey|dear)\b/i.test(trimmed)) return true;
-  if (/^(best|regards|thanks|cheers|sincerely|warm regards)\b/i.test(trimmed)) {
-    return true;
-  }
-
-  const words = trimmed.split(/\s+/).length;
-  return words <= 6 && trimmed.endsWith(",");
-}
-
-function formatBodyParagraphs(body: string): string[] {
-  const normalized = body
-    .replace(/\r\n/g, "\n")
-    .replace(/\r/g, "\n")
-    .split("\n")
-    .map((line) => line.trim())
-    .join("\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-
-  if (!normalized) return ["Hi there,"];
-
-  const lines = normalized.split("\n");
-  const paragraphs: string[] = [];
-  let buffer: string[] = [];
-
-  const pushBuffer = () => {
-    if (buffer.length > 0) {
-      paragraphs.push(buffer.join(" "));
-      buffer = [];
-    }
-  };
-
-  for (const line of lines) {
-    if (!line) {
-      pushBuffer();
-      continue;
-    }
-
-    if (isShortStandaloneLine(line)) {
-      pushBuffer();
-      paragraphs.push(line);
-      continue;
-    }
-
-    buffer.push(line);
-  }
-  pushBuffer();
-
-  return paragraphs.length > 0 ? paragraphs : [normalized];
-}
-
-function renderEmailHtml(body: string): string {
-  const paragraphs = formatBodyParagraphs(body);
-  const bodyHtml = paragraphs
-    .map((paragraph) => {
-      const safeParagraph = escapeHtml(paragraph).replace(/\n/g, "<br />");
-      return `<p style="margin:0 0 14px 0;">${safeParagraph}</p>`;
-    })
-    .join("");
-
-  return `
-    <div style="background:#f8fafc;padding:24px 12px;">
-      <div style="max-width:620px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:26px 24px;color:#0f172a;font-family:Inter,Arial,sans-serif;font-size:15px;line-height:1.65;">
-        ${bodyHtml}
-        <div style="margin-top:22px;padding-top:14px;border-top:1px solid #e2e8f0;color:#334155;">
-          <p style="margin:0 0 2px 0;font-weight:600;">Alex</p>
-          <p style="margin:0;">Experidium</p>
-        </div>
-      </div>
-    </div>
-  `.trim();
-}
+const DEFAULT_DELAY_SECONDS = 2;
+const DEFAULT_MAX_EMAILS_PER_DAY = 100;
 
 export async function POST(req: NextRequest) {
   try {
@@ -113,6 +30,52 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const prismaAny = prisma as unknown as Record<string, unknown>;
+    const appSettingsDelegate = prismaAny.appSettings as
+      | { findUnique: (args: { where: { id: string } }) => Promise<{ delayBetweenEmailsSeconds: number; maxEmailsPerDay: number } | null> }
+      | undefined;
+    const [appSettings, templateFallback] = await Promise.all([
+      appSettingsDelegate?.findUnique
+        ? appSettingsDelegate.findUnique({ where: { id: "default" } })
+        : Promise.resolve(null),
+      prisma.emailTemplate.findFirst({ orderBy: { updatedAt: "desc" } }),
+    ]);
+    const fallbackDelay = Number.parseInt(templateFallback?.subjectTemplate || "", 10);
+    const fallbackMaxPerDay = Number.parseInt(templateFallback?.bodyTemplate || "", 10);
+
+    const delayBetweenEmailsSeconds =
+      appSettings?.delayBetweenEmailsSeconds ??
+      (Number.isFinite(fallbackDelay) ? fallbackDelay : DEFAULT_DELAY_SECONDS);
+    const maxEmailsPerDay =
+      appSettings?.maxEmailsPerDay ??
+      (Number.isFinite(fallbackMaxPerDay)
+        ? fallbackMaxPerDay
+        : DEFAULT_MAX_EMAILS_PER_DAY);
+
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const sentToday = await prisma.emailSend.count({
+      where: {
+        sentAt: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+      },
+    });
+
+    if (sentToday + drafts.length > maxEmailsPerDay) {
+      const remainingToday = Math.max(maxEmailsPerDay - sentToday, 0);
+      return NextResponse.json(
+        {
+          error: `Daily send limit reached. Remaining today: ${remainingToday}, requested: ${drafts.length}, limit: ${maxEmailsPerDay}.`,
+        },
+        { status: 400 }
+      );
+    }
+
     const results: { draftId: string; messageId: string }[] = [];
     const errors: { draftId: string; error: string }[] = [];
 
@@ -123,12 +86,10 @@ export async function POST(req: NextRequest) {
       contact: { id: string; email: string; firstName: string; lastName: string };
     }[]) {
       try {
-        const htmlBody = renderEmailHtml(draft.body);
-
         const data = await sendEmail({
           to: draft.contact.email,
           subject: draft.subject,
-          html: htmlBody,
+          text: draft.body,
         });
 
         const messageId = data?.id || "unknown";
@@ -163,8 +124,10 @@ export async function POST(req: NextRequest) {
 
         results.push({ draftId: draft.id, messageId });
 
-        if (drafts.length > 1) {
-          await new Promise((resolve) => setTimeout(resolve, 2000));
+        if (drafts.length > 1 && delayBetweenEmailsSeconds > 0) {
+          await new Promise((resolve) =>
+            setTimeout(resolve, delayBetweenEmailsSeconds * 1000)
+          );
         }
       } catch (err) {
         errors.push({ draftId: draft.id, error: String(err) });
