@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,8 +21,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
+import {
+  LINKEDIN_AUTHORS,
+  formatAuthorLabel,
+  linkedinAuthorSelectClass,
+} from "@/lib/linkedin-authors";
+import {
+  LINKEDIN_STATUS_LABELS,
+  LINKEDIN_STATUS_VALUES,
+  linkedinStatusSelectClass,
+  parseLinkedInStatus,
+} from "@/lib/linkedin-status";
 
 const STATUSES = ["NEW", "QUALIFIED", "CONTACTED", "REPLIED", "BOUNCED", "UNSUBSCRIBED"];
+const AUTHOR_UNASSIGNED = "unassigned";
 
 interface Contact {
   id: string;
@@ -31,6 +43,7 @@ interface Contact {
   email: string;
   position: string | null;
   status: string;
+  author?: string | null;
   company: { name: string } | null;
 }
 
@@ -38,21 +51,42 @@ export function EditContactDialog({
   contact,
   open,
   onOpenChange,
+  linkedinMode = false,
 }: {
   contact: Contact;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  linkedinMode?: boolean;
 }) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const statusOptions = linkedinMode ? [...LINKEDIN_STATUS_VALUES] : STATUSES;
+  const initialStatus = linkedinMode
+    ? (parseLinkedInStatus(contact.status) ?? "NEW")
+    : contact.status;
   const [form, setForm] = useState({
     firstName: contact.firstName,
     lastName: contact.lastName,
     email: contact.email,
     position: contact.position || "",
-    status: contact.status,
+    status: initialStatus,
+    author: contact.author || "",
   });
+
+  useEffect(() => {
+    setForm({
+      firstName: contact.firstName,
+      lastName: contact.lastName,
+      email: contact.email,
+      position: contact.position || "",
+      status: linkedinMode
+        ? (parseLinkedInStatus(contact.status) ?? "NEW")
+        : contact.status,
+      author: contact.author || "",
+    });
+    setError("");
+  }, [contact, linkedinMode]);
 
   function update(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -77,12 +111,14 @@ export function EditContactDialog({
           email: form.email.trim(),
           position: form.position.trim() || null,
           status: form.status,
+          author: form.author.trim() || null,
         }),
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        setError(data.error || "Failed to update");
+        const data = (await res.json()) as { error?: string; details?: string };
+        const msg = [data.error, data.details].filter(Boolean).join(" — ");
+        setError(msg || "Failed to update");
         return;
       }
 
@@ -174,13 +210,44 @@ export function EditContactDialog({
           <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
             <Select value={form.status} onValueChange={(v) => update("status", v ?? form.status)}>
-              <SelectTrigger>
+              <SelectTrigger
+                className={
+                  linkedinMode ? linkedinStatusSelectClass(form.status) : undefined
+                }
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {STATUSES.map((s) => (
+                {statusOptions.map((s) => (
                   <SelectItem key={s} value={s}>
-                    {s}
+                    {linkedinMode && (LINKEDIN_STATUS_VALUES as readonly string[]).includes(s)
+                      ? LINKEDIN_STATUS_LABELS[s as keyof typeof LINKEDIN_STATUS_LABELS]
+                      : s}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="author">Author</Label>
+            <Select
+              value={form.author || AUTHOR_UNASSIGNED}
+              onValueChange={(v) =>
+                update("author", v === AUTHOR_UNASSIGNED ? "" : (v ?? ""))
+              }
+            >
+              <SelectTrigger
+                id="author"
+                className={linkedinMode ? linkedinAuthorSelectClass(form.author) : undefined}
+              >
+                <SelectValue placeholder="Select author" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={AUTHOR_UNASSIGNED}>Unassigned</SelectItem>
+                {LINKEDIN_AUTHORS.map((author) => (
+                  <SelectItem key={author} value={author}>
+                    {formatAuthorLabel(author)}
                   </SelectItem>
                 ))}
               </SelectContent>

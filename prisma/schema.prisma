@@ -34,6 +34,7 @@ enum ContactStatus {
   NEW
   QUALIFIED
   CONTACTED
+  OUTREACHED
   REPLIED
   BOUNCED
   UNSUBSCRIBED
@@ -52,6 +53,7 @@ model Contact {
   state       String?
   status      ContactStatus @default(NEW)
   source      String?
+  author      String?
   tags        String[]
 
   companyId   String?

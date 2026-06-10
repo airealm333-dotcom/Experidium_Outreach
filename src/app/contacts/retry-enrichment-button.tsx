@@ -19,7 +19,13 @@ type RetryResponse = {
   error?: string;
 };
 
-export function RetryEnrichmentButton({ lockedCount }: { lockedCount: number }) {
+export function RetryEnrichmentButton({
+  lockedCount,
+  basePath = "/contacts",
+}: {
+  lockedCount: number;
+  basePath?: string;
+}) {
   const [loading, setLoading] = useState(false);
 
   async function handleRetry() {
@@ -40,7 +46,7 @@ export function RetryEnrichmentButton({ lockedCount }: { lockedCount: number }) 
       // Hard navigate so /contacts re-renders with fresh server data and the
       // success banner. Soft-routing here can hand back a stale RSC payload.
       const unlocked = data.unlocked ?? 0;
-      const url = `/contacts?retried=${unlocked}`;
+      const url = `${basePath}?retried=${unlocked}`;
       if (typeof window !== "undefined") {
         window.location.assign(url);
       }

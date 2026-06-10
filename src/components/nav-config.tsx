@@ -9,6 +9,7 @@ import {
   Upload,
   Settings,
 } from "lucide-react";
+import { LinkedInMenuIcon } from "@/components/linkedin-menu-icon";
 
 export interface NavItem {
   name: string;
@@ -24,5 +25,6 @@ export const NAV_ITEMS: NavItem[] = [
   { name: "Send Queue", href: "/send-queue", icon: Send },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
   { name: "Import", href: "/import", icon: Upload },
+  { name: "LinkedIn", href: "/linkedin", icon: LinkedInMenuIcon },
   { name: "Settings", href: "/settings", icon: Settings },
 ];

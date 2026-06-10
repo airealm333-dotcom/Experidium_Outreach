@@ -10,6 +10,7 @@ const STATUS_LABELS: Record<ContactStatusValue, string> = {
   NEW: "New",
   QUALIFIED: "Qualified",
   CONTACTED: "Contacted",
+  OUTREACHED: "Outreached",
   REPLIED: "Replied",
   BOUNCED: "Bounced",
   UNSUBSCRIBED: "Unsubscribed",
@@ -21,9 +22,10 @@ type Props = {
   statusCounts: Partial<Record<ContactStatusValue, number>>;
   q?: string;
   showLocked: boolean;
+  basePath?: string;
 };
 
-export function ContactsTabs({ activeStatus, statusCounts, q, showLocked }: Props) {
+export function ContactsTabs({ activeStatus, statusCounts, q, showLocked, basePath }: Props) {
   const allTotal = CONTACT_STATUS_VALUES.reduce(
     (sum, s) => sum + (statusCounts[s] ?? 0),
     0
@@ -50,7 +52,7 @@ export function ContactsTabs({ activeStatus, statusCounts, q, showLocked }: Prop
         role="tab"
         aria-selected={activeStatus === undefined}
         data-active={activeStatus === undefined ? "" : undefined}
-        href={buildContactsHref({ ...base })}
+        href={buildContactsHref({ ...base, basePath })}
         className={tabClass(activeStatus === undefined)}
       >
         All
@@ -68,7 +70,7 @@ export function ContactsTabs({ activeStatus, statusCounts, q, showLocked }: Prop
             role="tab"
             aria-selected={active}
             data-active={active ? "" : undefined}
-            href={buildContactsHref({ ...base, status: value })}
+            href={buildContactsHref({ ...base, status: value, basePath })}
             className={tabClass(active)}
           >
             {STATUS_LABELS[value]}

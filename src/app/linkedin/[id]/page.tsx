@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
-import { ContactDetailBody } from "./contact-detail-body";
+import { ContactDetailBody } from "../../contacts/[id]/contact-detail-body";
 
-export default async function ContactDetailPage({
+export default async function LinkedInContactDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -9,7 +9,7 @@ export default async function ContactDetailPage({
   const { id } = await params;
 
   try {
-    const body = await ContactDetailBody({ basePath: "/contacts", id });
+    const body = await ContactDetailBody({ basePath: "/linkedin", id });
     if (!body) notFound();
     return body;
   } catch {

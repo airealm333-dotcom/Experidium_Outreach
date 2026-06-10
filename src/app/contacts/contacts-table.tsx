@@ -68,7 +68,13 @@ function SourceCell({ contact }: { contact: Contact }) {
   return <span className="text-muted-foreground">—</span>;
 }
 
-export function ContactsTable({ contacts }: { contacts: Contact[] }) {
+export function ContactsTable({
+  contacts,
+  basePath = "/contacts",
+}: {
+  contacts: Contact[];
+  basePath?: string;
+}) {
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
@@ -188,7 +194,7 @@ export function ContactsTable({ contacts }: { contacts: Contact[] }) {
               </TableCell>
               <TableCell className="font-medium">
                 <Link
-                  href={`/contacts/${contact.id}`}
+                  href={`${basePath}/${contact.id}`}
                   className="hover:underline"
                 >
                   {contact.firstName} {contact.lastName}
