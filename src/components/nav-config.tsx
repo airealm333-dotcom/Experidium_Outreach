@@ -8,6 +8,7 @@ import {
   BarChart3,
   Upload,
   Settings,
+  UploadCloud,
 } from "lucide-react";
 import { LinkedInMenuIcon } from "@/components/linkedin-menu-icon";
 
@@ -19,6 +20,7 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
+  { name: "Import Campaign", href: "/import-campaign", icon: UploadCloud },
   { name: "Contacts", href: "/contacts", icon: Users },
   { name: "Pipeline", href: "/pipeline", icon: Kanban },
   { name: "Email Drafts", href: "/drafts", icon: FileEdit },

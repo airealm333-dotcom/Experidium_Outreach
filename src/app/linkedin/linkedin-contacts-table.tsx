@@ -12,13 +12,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Check, Copy, Loader2, Pencil, Trash2 } from "lucide-react";
+import { Loader2, Pencil, Trash2 } from "lucide-react";
 import { EditContactDialog } from "../contacts/edit-contact-dialog";
-import {
-  LINKEDIN_AUTHORS,
-  formatAuthorLabel,
-  linkedinAuthorSelectClass,
-} from "@/lib/linkedin-authors";
+import { InlineUpdateMessage } from "@/components/inline-update-message";
+import { CopyLinkButton } from "@/components/copy-link-button";
+import { ContactAuthorSelect } from "@/components/contact-author-select";
 import {
   LINKEDIN_STATUS_LABELS,
   LINKEDIN_STATUS_VALUES,
@@ -48,128 +46,6 @@ interface LinkedInContact {
   status: string;
   author: string | null;
   company: { name: string; linkedinUrl: string | null } | null;
-}
-
-function InlineUpdateMessage({ error, saving }: { error: string; saving: boolean }) {
-  if (saving) {
-    return (
-      <p className="flex items-center gap-1 text-xs text-muted-foreground">
-        <Loader2 className="h-3 w-3 animate-spin" />
-        Updating…
-      </p>
-    );
-  }
-  if (error) {
-    return <p className="text-xs text-red-600">{error}</p>;
-  }
-  return null;
-}
-
-function CopyLinkButton({ url }: { url: string | null | undefined }) {
-  const [copied, setCopied] = useState(false);
-
-  if (!url?.trim()) {
-    return <span className="text-muted-foreground">—</span>;
-  }
-
-  async function handleCopy() {
-    const link = url!.trim();
-    try {
-      await navigator.clipboard.writeText(link);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
-    } catch {
-      window.prompt("Copy this link:", link);
-    }
-  }
-
-  return (
-    <Button
-      type="button"
-      variant="outline"
-      size="sm"
-      className="h-7 gap-1.5 px-2 text-xs"
-      onClick={handleCopy}
-      title={url}
-    >
-      {copied ? (
-        <>
-          <Check className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
-          Copied
-        </>
-      ) : (
-        <>
-          <Copy className="h-3.5 w-3.5 shrink-0" />
-          Copy link
-        </>
-      )}
-    </Button>
-  );
-}
-
-function AuthorSelect({
-  contactId,
-  value,
-}: {
-  contactId: string;
-  value: string | null;
-}) {
-  const router = useRouter();
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [current, setCurrent] = useState(value ?? "");
-
-  useEffect(() => {
-    setCurrent(value ?? "");
-    setError("");
-  }, [value]);
-
-  async function handleChange(next: string) {
-    const author = next || null;
-    const previous = current;
-    setCurrent(next);
-    setSaving(true);
-    setError("");
-
-    try {
-      const res = await fetch(`/api/contacts/${contactId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ author }),
-      });
-      if (!res.ok) {
-        setError(await readApiError(res));
-        setCurrent(previous);
-        return;
-      }
-      router.refresh();
-    } catch {
-      setError("Network error");
-      setCurrent(previous);
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  return (
-    <div className="min-w-[7.5rem] space-y-1">
-      <select
-        value={current}
-        disabled={saving}
-        onChange={(e) => handleChange(e.target.value)}
-        className={`h-8 w-full rounded-md border px-2 text-xs disabled:opacity-60 ${linkedinAuthorSelectClass(current)}`}
-        aria-label="Assign author"
-      >
-        <option value="">Unassigned</option>
-        {LINKEDIN_AUTHORS.map((author) => (
-          <option key={author} value={author}>
-            {formatAuthorLabel(author)}
-          </option>
-        ))}
-      </select>
-      <InlineUpdateMessage error={error} saving={saving} />
-    </div>
-  );
 }
 
 function StatusSelect({
@@ -307,7 +183,7 @@ export function LinkedInContactsTable({
                   {contact.position ?? "—"}
                 </TableCell>
                 <TableCell>
-                  <AuthorSelect contactId={contact.id} value={contact.author} />
+                  <ContactAuthorSelect contactId={contact.id} value={contact.author} />
                 </TableCell>
                 <TableCell>
                   <StatusSelect contactId={contact.id} value={contact.status} />

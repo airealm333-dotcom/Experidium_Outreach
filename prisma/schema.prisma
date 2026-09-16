@@ -19,11 +19,13 @@ model Company {
   employeeCount Int?
   country     String?
   state       String?
+  apolloOrganizationId String? @unique
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
   contacts    Contact[]
   deals       Deal[]
+  campaigns   CampaignCompany[]
 
   @@index([name])
 }
@@ -66,6 +68,7 @@ model Contact {
   deals       Deal[]
   emailDrafts EmailDraft[]
   emailSends  EmailSend[]
+  campaigns   CampaignContact[]
 
   @@index([email])
   @@index([companyId])
@@ -235,4 +238,74 @@ model EmailEvent {
   @@index([sendId])
   @@index([type])
   @@index([timestamp])
+}
+
+// --- Import Campaigns (Campaign -> Companies -> People, nested via Apollo) ---
+
+enum CampaignStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+model Campaign {
+  id          String         @id @default(cuid())
+  name        String
+  description String?
+  status      CampaignStatus @default(DRAFT)
+  assignedTo  String?
+  source      String         @default("import-campaign")
+
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  companies   CampaignCompany[]
+  contacts    CampaignContact[]
+
+  @@index([status])
+  @@index([assignedTo])
+  @@index([createdAt])
+}
+
+model CampaignCompany {
+  id             String   @id @default(cuid())
+
+  campaignId     String
+  campaign       Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  companyId      String
+  company        Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  searchCriteria Json?
+  apolloOrgId    String?
+  addedBy        String?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([campaignId, companyId])
+  @@index([campaignId])
+  @@index([companyId])
+}
+
+model CampaignContact {
+  id             String   @id @default(cuid())
+
+  campaignId     String
+  campaign       Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  contactId      String
+  contact        Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  companyId      String?
+  searchCriteria Json?
+  wasExisting    Boolean  @default(false)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([campaignId, contactId])
+  @@index([campaignId])
+  @@index([contactId])
+  @@index([companyId])
 }

@@ -5,9 +5,10 @@
 Outreach Dashboard is a full-stack outreach CRM built with Next.js App Router. It helps a sales/outreach workflow end-to-end:
 
 - import leads from CSV (Apollo-style exports) or directly from Apollo ICP filter modal
+- manage a separate LinkedIn contact list (Apollo import requiring a LinkedIn URL, author assignment, NEW/OUTREACHED status)
 - generate personalized cold-email drafts using Groq (Llama 3.3 70B)
 - review/edit/approve drafts
-- send approved emails through Resend
+- send approved emails through Resend (paced + daily cap via `AppSettings`)
 - receive delivery/open/click/bounce/complaint events via Resend webhooks
 - track outcomes in dashboard + analytics + lightweight deal pipeline
 
@@ -35,9 +36,11 @@ Branding and sender identity in code currently target `Experidium`, with default
 
 - `src/app` - App Router pages + API routes
 - `src/components` - shared UI and navigation components
-- `src/lib` - integrations and core services (`prisma`, `ai`, `resend`, `analytics`)
+- `src/lib` - integrations and core services (`prisma`, `ai`, `resend`, `analytics`, Apollo (`apollo-import-handler.ts` people search/import, `apollo-company-search.ts` company search, `apollo-shared.ts` common helpers used by both), LinkedIn helpers, `team-members.ts` assignable-team-member list — `linkedin-authors.ts` is now a re-export shim over it)
 - `prisma/schema.prisma` - full data model
-- `prisma/seed.ts` - default seed data (pipeline stages + default template)
+- `prisma/seed.ts` - pipeline stages, default template, `AppSettings` singleton
+- `.cursor/rules/` - Cursor agent conventions and outreach invariants
+- `.env.example` - required environment variable template
 - `n8n workflows/` - external workflow JSON exports
 - `public/` - static assets
 
@@ -60,6 +63,13 @@ Generated Prisma client path is configured to:
 7. New contacts are inserted with source `csv-import` or `apollo-saved-search` (Apollo ICP modal path).
 8. Apollo import immediately runs bulk enrichment (`/api/v1/people/bulk_match`) in chunks of 10 IDs and updates unlocked work emails.
 
+### A2) LinkedIn list flow
+
+1. `/linkedin` is a separate contact list filtered to source `linkedin-apollo`.
+2. Import uses `POST /api/import/apollo/linkedin` (same Apollo handler, `requireLinkedinUrl: true`).
+3. Status set is `NEW` / `OUTREACHED` (`linkedin-status.ts`). Legacy `CONTACTED` rows display as Outreached.
+4. Rows can be assigned an `author` (`adithyan`, `adarsh`, `vishnu`).
+
 ### B) Draft generation flow
 
 1. User triggers generate from contacts list or contact detail.
@@ -80,7 +90,7 @@ Generated Prisma client path is configured to:
 1. `/send-queue` lists approved drafts.
 2. User sends one, selected, or all approved drafts.
 3. `POST /api/send` sends each draft through Resend sequentially (1 API call per draft).
-4. API includes throttling delay: **2000ms between sends** when bulk sending.
+4. Delay and daily cap come from `AppSettings` (defaults **2s** between sends, **100** emails/day). Older fallback stored pacing numbers on the email template subject/body fields.
 5. On success it creates `EmailSend`, updates draft to `SENT`, sets contact status `CONTACTED`, and writes an email activity.
 
 ### E) Webhook/event flow
@@ -93,6 +103,18 @@ Generated Prisma client path is configured to:
    - `BOUNCED` -> `Contact.status = BOUNCED`
    - `COMPLAINED` -> `Contact.status = UNSUBSCRIBED`
 
+### F) Import Campaign flow (in progress, phased build)
+
+Nested Campaign -> Companies -> People workflow, distinct from the existing one-shot Apollo import dialog on `/contacts`/`/linkedin`. A `Campaign` groups companies/contacts sourced together (e.g. "Fintech companies in APAC") and can be assigned to a team member; a `Company`/`Contact` may belong to multiple campaigns (many-to-many via `CampaignCompany`/`CampaignContact`).
+
+- **Phase 1 (done)**: `/import-campaign` list (create/search/filter-by-assignee campaigns), `/import-campaign/[id]` detail view, `Campaign` CRUD via `/api/campaigns` and `/api/campaigns/[id]`, assignee reassignment.
+- **Phase 2 (done)**: live Apollo company search (`src/lib/apollo-company-search.ts`, `POST https://api.apollo.io/api/v1/mixed_companies/search`) and attaching/detaching companies on a campaign via `/api/campaigns/[id]/companies/**`. Shared Apollo helpers (payload cleaning, debug/redaction, slugify, etc.) were pulled out of `apollo-import-handler.ts` into `src/lib/apollo-shared.ts` so both integrations reuse them; `TagInput` was pulled out of `apollo-import-dialog.tsx` into `src/components/apollo-import/tag-input.tsx` for the same reason. Note: Apollo's `organizations` array on this endpoint does not return plain-text `industry`/`country`/`state`/employee count the way the people-search endpoint's nested org object does — those fields come back `null` for most results; this is Apollo's actual response shape, not a bug.
+- **Phase 3 (done)**: `apollo-import-handler.ts` split into `searchApolloPeople` (DB-free search+dedupe) and `persistImportRows` (DB writes), with `runApolloImport` now a thin wrapper — `/api/import/apollo` and `/api/import/apollo/linkedin` behavior is unchanged (regression-tested live). `ApolloFilterPayload` gained `organizationIds`/`organizationDomains` for company-scoped search, preserved through all 3 fallback tiers. People search/import via `/api/campaigns/[id]/people/**`: search is DB-free and flags `alreadyContact`/`alreadyInCampaign`; import creates real `Contact` rows (or links pre-existing ones — never duplicates), links them via `CampaignContact`, fills empty `Contact.author` from `Campaign.assignedTo` (never overwrites an existing author), and runs the same bulk-enrichment as the regular import flow. The `/import-campaign/[id]` UI now has a "Pick people" button per attached company opening a `PeoplePickerSheet` (title/seniority/keyword search scoped to that company), and a contacts list with per-contact detach.
+- **Filter UX hardening (done)**: Locations (company search) and Seniorities (people search) are now closed multi-select dropdowns (`src/components/ui/multi-select.tsx`, built on `@base-ui/react/combobox`) backed by real fixed lookups (`src/lib/countries.ts`, `src/lib/apollo-seniorities.ts`) instead of free text — these two fields have genuine fixed value sets in Apollo's API, so typos/variants can no longer silently return zero results. Titles/Keywords remain free-text `TagInput` (inherently open-ended in Apollo's model). The original one-shot `ApolloImportDialog` (`/contacts`, `/linkedin`) was deliberately left untouched.
+- **Industries field removed (done)**: the company search panel originally had a separate "Industries" field sending `organization_industry_tag_ids` — this was never a real, documented Apollo parameter (confirmed both by a live 422 `SEARCH_PARAMS_INVALID` response and by Apollo's own API docs, which have no industry-tag-ID parameter at all). The real, working, documented mechanism for industry-type filtering is `q_organization_keyword_tags` — i.e. the existing **Keywords** field (Apollo's own docs give `mining`/`consulting` as example keyword values). The Industries field and its `organization_industry_tag_ids` mapping were deleted rather than papered over with a fake lookup.
+- **People picker modal (done)**: the "Pick people" UI was converted from a `Sheet` (side drawer) to a centered `Dialog` per user preference — file renamed `people-picker-sheet.tsx` -> `people-picker-dialog.tsx`, component `PeoplePickerSheet` -> `PeoplePickerDialog`.
+- **Campaign Contacts table (done)**: the campaign detail page's Contacts section (`src/app/import-campaign/[id]/contact-list.tsx`) is now a full table matching the `/linkedin` table's look — Sl No, Name, LinkedIn, Company, Company LinkedIn, Title, inline-editable Author, inline-editable Status (full `ContactStatus` enum, not LinkedIn's simplified set — these are regular Contacts), edit (opens `EditContactDialog`) and remove (detach-from-campaign only, unchanged semantics) actions. `CopyLinkButton`, the author `<select>`, and `InlineUpdateMessage` were extracted out of `linkedin-contacts-table.tsx` into shared components (`src/components/copy-link-button.tsx`, `src/components/contact-author-select.tsx`, `src/components/inline-update-message.tsx`) so both tables reuse them; `linkedin-contacts-table.tsx` itself is unchanged in behavior. New `src/lib/contact-status.ts` and `src/components/contact-status-select.tsx` provide the full-enum inline status editor (re-exports `CONTACT_STATUS_VALUES` from `contacts-url.ts` rather than redefining it).
+
 ---
 
 ## 5) Frontend Pages (Navigation)
@@ -100,14 +122,18 @@ Generated Prisma client path is configured to:
 Defined in `src/components/nav-config.tsx`:
 
 - `/` - Dashboard
-- `/contacts` - Contacts list with status tabs, pagination (20/page), search, locked-email visibility toggle, retry enrichment action, select/edit/delete, generate drafts, import from Apollo ICP modal
+- `/contacts` - Contacts list with status tabs, pagination (10/20/50, default 10), search, locked-email visibility toggle, retry enrichment action, select/edit/delete, generate drafts, import from Apollo ICP modal
 - `/contacts/[id]` - Contact detail with timeline/actions
 - `/pipeline` - Kanban-like deal board with drag/drop stage movement
 - `/drafts` - Draft queue and review actions
 - `/send-queue` - Approved drafts + send actions + recent sends
 - `/analytics` - KPI, trend, domain, funnel, and failure-reason analytics
 - `/import` - CSV upload/mapping/import wizard
-- `/settings` - API key checks, prompt template editor, sender/pacing display
+- `/import-campaign` - Campaign list (create/assign/delete); nested Campaign -> Companies -> People Apollo workflow (Phase 1: CRUD + assignee only; company/people search lands in later phases)
+- `/import-campaign/[id]` - Campaign detail/builder
+- `/linkedin` - LinkedIn-sourced contacts (author, NEW/OUTREACHED, Apollo import requiring LinkedIn URL)
+- `/linkedin/[id]` - LinkedIn contact detail
+- `/settings` - API key checks, prompt template editor, sender identity, persistable send pacing
 
 Layout includes desktop sidebar and mobile sheet navigation.
 
@@ -129,6 +155,7 @@ Layout includes desktop sidebar and mobile sheet navigation.
 
 - `POST /api/import` - CSV ingest and mapping-driven contact/company creation
 - `POST /api/import/apollo` - Apollo people ingest from ICP filter payload with pagination, dedupe-by-`apolloPersonId`, immediate enrichment trigger, and import debug metadata
+- `POST /api/import/apollo/linkedin` - same Apollo ingest with `source=linkedin-apollo` and required LinkedIn URL
 
 ### Enrichment / Debug
 
@@ -158,8 +185,8 @@ Layout includes desktop sidebar and mobile sheet navigation.
 
 ### Settings
 
-- `GET /api/settings` - fetch latest prompt template
-- `PATCH /api/settings` - create/update prompt template
+- `GET /api/settings` - fetch latest prompt template plus send pacing
+- `PATCH /api/settings` - create/update prompt template and/or `AppSettings` pacing (`delayBetweenEmailsSeconds`, `maxEmailsPerDay`)
 
 ### Analytics
 
@@ -169,6 +196,20 @@ Layout includes desktop sidebar and mobile sheet navigation.
 
 - `POST /api/webhooks/resend` - ingest Resend delivery/engagement events
 
+### Campaigns
+
+- `GET /api/campaigns` - list campaigns (`?status=&assignedTo=`) with company/contact counts
+- `POST /api/campaigns` - create campaign (`name`, optional `description`, `assignedTo`)
+- `GET /api/campaigns/[id]` - campaign detail incl. attached companies and imported contacts
+- `PATCH /api/campaigns/[id]` - update `name`/`description`/`status`/`assignedTo`
+- `DELETE /api/campaigns/[id]` - delete campaign (cascades join rows only, never the underlying Company/Contact)
+- `POST /api/campaigns/[id]/companies/search` - live Apollo company search scoped to this campaign; flags each result `alreadyInCampaign`
+- `POST /api/campaigns/[id]/companies` - attach selected Apollo company results (upserts `Company` by `company-<slug>` id, sets `apolloOrganizationId`, then links via `CampaignCompany`)
+- `DELETE /api/campaigns/[id]/companies/[companyId]` - detach a company from the campaign (deletes the join row only, never the `Company`)
+- `POST /api/campaigns/[id]/people/search` - Apollo people search scoped to the campaign's attached companies (`companyIds` resolved to their `apolloOrganizationId`s); flags each result `alreadyContact`/`alreadyInCampaign`; no writes
+- `POST /api/campaigns/[id]/people` - import selected people: creates/links `Contact` rows (via `persistImportRows`), links via `CampaignContact`, fills empty `author` from the campaign's assignee, runs bulk enrichment
+- `DELETE /api/campaigns/[id]/people/[contactId]` - detach a contact from the campaign (deletes the join row only, never the `Contact`)
+
 ---
 
 ## 7) Database Schema Summary (Prisma)
@@ -176,30 +217,37 @@ Layout includes desktop sidebar and mobile sheet navigation.
 Core models in `prisma/schema.prisma`:
 
 - `Company` - organization data
-- `Contact` - lead/prospect entity, unique email, optional unique `apolloPersonId` for Apollo identity/dedupe
+- `Contact` - lead/prospect entity, unique email, optional unique `apolloPersonId`, optional `author`, `tags[]`, `source`
 - `PipelineStage` - configurable deal stages
 - `Deal` - pipeline item tied to contact and stage
 - `Activity` - notes/tasks/email logs per contact
 - `EmailTemplate` - prompt template source for AI generation
+- `AppSettings` - singleton (`id: default`) for send delay + daily cap
 - `EmailDraft` - generated and reviewable draft
 - `EmailSend` - sent-mail record mapped to Resend message ID
 - `EmailEvent` - webhook event history
+- `Campaign` - a named "Import Campaign" (company/region ICP target), optionally assigned to a team member
+- `CampaignCompany` - join table: companies attached to a campaign (many-to-many, `@@unique([campaignId, companyId])`)
+- `CampaignContact` - join table: contacts imported via a campaign (many-to-many, `@@unique([campaignId, contactId])`)
 
 Important enums:
 
-- `ContactStatus`: `NEW`, `QUALIFIED`, `CONTACTED`, `REPLIED`, `BOUNCED`, `UNSUBSCRIBED`
+- `ContactStatus`: `NEW`, `QUALIFIED`, `CONTACTED`, `OUTREACHED`, `REPLIED`, `BOUNCED`, `UNSUBSCRIBED`
 - `DealStatus`: `OPEN`, `WON`, `LOST`
 - `DraftStatus`: `PENDING_REVIEW`, `APPROVED`, `REJECTED`, `SENT`
 - `EmailEventType`: `DELIVERED`, `OPENED`, `CLICKED`, `BOUNCED`, `COMPLAINED`
 - `ActivityType`: `TASK`, `NOTE`, `EMAIL`
+- `CampaignStatus`: `DRAFT`, `ACTIVE`, `ARCHIVED`
 
 Notable constraints/relations:
 
 - `Contact.email` unique
 - `Contact.apolloPersonId` unique (nullable)
+- `Company.apolloOrganizationId` unique (nullable) - set when a company is attached to a campaign via Apollo org search
 - `EmailSend.resendMessageId` unique (nullable)
 - one draft can map to one send (`EmailSend.draftId` unique)
 - cascading deletes on many contact-linked records
+- a `Company` or `Contact` can belong to multiple campaigns (many-to-many via the join tables); deleting a `Campaign` cascades only its join rows, never the underlying `Company`/`Contact`
 
 ---
 
@@ -213,6 +261,7 @@ Notable constraints/relations:
   - `{{firstName}}`, `{{lastName}}`
   - `{{position}}`
   - `{{companyName}}`, `{{companyIndustry}}`, `{{companySize}}`, `{{companyDescription}}`
+  - `{{recentNote}}` (latest NOTE activity, if any)
 
 Output parser expects:
 
@@ -260,13 +309,20 @@ Reply-rate is currently unavailable (`null`) in provider-only mode.
 Settings page shows:
 
 - env key status indicators for `GROQ_API_KEY`, `RESEND_API_KEY`, `DATABASE_URL`
-- sender identity display
+- sender identity display (disabled inputs; from address is still hardcoded in Resend helper)
 - editable AI prompt template (persisted via `/api/settings`)
-- send pacing card (display-only note; current send delay is hardcoded in API route)
+- send pacing form persists `delayBetweenEmailsSeconds` and `maxEmailsPerDay` on `AppSettings` (with legacy template-field fallback if the client has no `appSettings` delegate)
 
 ---
 
 ## 11) Scripts and Local Commands
+
+First-time local setup:
+
+1. `npm install`
+2. Copy `.env.example` to `.env` and fill real keys (never commit `.env`)
+3. `npm run db:setup` against a reachable PostgreSQL `DATABASE_URL`
+4. `npm run dev`
 
 From `package.json`:
 
@@ -296,13 +352,11 @@ From `package.json`:
 ### Present in `.env.example`
 
 - `DATABASE_URL`
-- `GOOGLE_GENERATIVE_AI_API_KEY` (not used by current code)
+- `GROQ_API_KEY`
 - `RESEND_API_KEY`
 - `RESEND_WEBHOOK_SECRET`
 - `APOLLO_API_KEY`
 - `NEXT_PUBLIC_APP_URL`
-
-Note: current AI implementation uses Groq, so `.env.example` still contains a stale Gemini key name and should be aligned if desired.
 
 ---
 
@@ -318,6 +372,7 @@ Note: current AI implementation uses Groq, so `.env.example` still contains a st
   - Won
   - Lost
 - default email template (`id: default-template`) with outreach instructions and output format
+- `AppSettings` singleton (`id: default`) with `delayBetweenEmailsSeconds: 2` and `maxEmailsPerDay: 100`
 
 ---
 
@@ -332,8 +387,8 @@ Note: current AI implementation uses Groq, so `.env.example` still contains a st
 Contacts page behavior:
 
 - server-rendered status tabs derived from current query scope (`All` + non-empty statuses only)
-- URL-driven filters (`q`, `status`, `showLocked`, `page`) for shareable state
-- offset pagination at 20 records per page with compact pager
+- URL-driven filters (`q`, `status`, `showLocked`, `page`, `pageSize`) for shareable state
+- offset pagination with page sizes 10 / 20 / 50 (default 10) and a compact pager
 - locked Apollo rows hidden by default with explicit Show/Hide and Retry Enrichment controls
 
 ---
@@ -353,12 +408,14 @@ These include Google Sheets and Apollo-oriented automation nodes and appear to b
 ## 16) Current Limitations and Observations
 
 - No auth/user system; app is single-tenant by design.
-- Send pacing and generation pacing are hardcoded in API routes (2.0s send / 2.1s generate).
-- Settings page shows pacing inputs but does not currently persist/apply them.
+- Generate pacing is still hardcoded (~2.1s per contact). Send pacing is stored in `AppSettings` but some routes still use a `prisma as unknown` delegate fallback.
+- Sender name/email on Settings are display-only; Resend from-address is hardcoded.
 - CSV parser is simple custom parsing and may not handle all edge-case CSV quoting patterns.
 - Contact batch delete in UI performs per-contact API calls sequentially.
-- `.env.example` mentions Gemini key while implementation uses Groq.
+- Schema is synced with `db:push` (no checked-in Prisma migration history).
 - Apollo enrichment may leave some rows in unlock-placeholder state when Apollo does not return an email (`skippedNoEmail`); these are now manageable via retry + show/hide controls.
+- Import Campaign's Apollo company search (`mixed_companies/search`) returns `null` for `industry`/`country`/`state`/employee count on most results — Apollo's `organizations` array (public prospecting results) carries less metadata than `accounts` (companies already saved in the connected Apollo account); this is a live API behavior, not a bug.
+- The nested campaign flow (search companies -> pick people per company) can multiply Apollo API calls versus the original one-shot import dialog; there's no call-budget/rate-limit UI feedback yet beyond the existing 429-retry-once behavior in `apollo-enrich.ts`.
 
 ---
 
