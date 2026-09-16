@@ -1,0 +1,18 @@
+---
+description: Prisma schema and status-enum change rules
+globs: prisma/**,src/app/contacts/contacts-url.ts,src/lib/linkedin-status.ts
+alwaysApply: false
+---
+
+# Prisma and status enums
+
+- Additive schema first (optional field), then backfill, then required.
+- After schema edits: `npm run db:generate`. Local schema sync is `npm run db:push`. Do not invent production migrations unless asked.
+- Keep `ContactStatus` in schema, `CONTACT_STATUS_VALUES`, and LinkedIn helpers in sync.
+- Seed (`prisma/seed.ts`) must upsert pipeline stages, `default-template`, and `AppSettings` id `default`.
+- Do not rename `email`, `apolloPersonId`, or `resendMessageId` without a data plan. Contact deletes cascade to drafts/sends/events.
+
+```prisma
+// ❌ BAD — drop unique email or apolloPersonId
+// ✅ GOOD — add optional field, generate client, update readers
+```

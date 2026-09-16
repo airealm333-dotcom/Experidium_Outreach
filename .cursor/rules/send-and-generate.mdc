@@ -1,0 +1,19 @@
+---
+description: Send, generate, and Resend webhook safety
+globs: src/app/api/send/**,src/app/api/generate/**,src/app/api/webhooks/**,src/lib/resend.ts,src/lib/ai.ts
+alwaysApply: false
+---
+
+# Send and generate
+
+- Send only `APPROVED` drafts. Create `EmailSend`, set draft `SENT`, set contact `CONTACTED`, write an EMAIL activity.
+- Read pacing from `AppSettings` (`delayBetweenEmailsSeconds`, `maxEmailsPerDay`). Keep the daily cap check before sending.
+- One Resend call per recipient. Default from: `Alex <alex@experidium.online>`.
+- Generate uses Groq (`GROQ_API_KEY`), not Gemini. Throttle ~2100ms. Output must parse `Subject:` / `Body:`.
+- Webhook route must keep optional `RESEND_WEBHOOK_SECRET` verification and event-hash dedupe.
+- Never log API keys or full recipient payloads to the client.
+
+```ts
+// ❌ BAD — send every draftId with no status filter or delay
+// ✅ GOOD — APPROVED only, then sleep using AppSettings delay
+```

@@ -1,0 +1,23 @@
+---
+description: Domain rules for contacts, drafts, send, and Apollo import
+alwaysApply: true
+---
+
+# Outreach invariants
+
+- `Contact.email` is unique. Apollo locked rows use `email_not_unlocked+<apolloId>@apollo.local`. Never collapse those onto a shared email.
+- Apollo import dedupes by `apolloPersonId`, not email. Companies use deterministic `company-<slug>` ids.
+- Draft machine: `PENDING_REVIEW` → `APPROVED` → `SENT`. `POST /api/send` must send only `APPROVED` drafts.
+- Keep send pacing (delay + daily cap from `AppSettings`, defaults 2s / 100). Do not bulk-fire Resend.
+- Generate pacing stays ~2100ms per contact. On Groq quota errors, skip remaining contacts.
+- Webhooks: bounce → `BOUNCED`, complaint → `UNSUBSCRIBED`. Keep signature checks.
+- Email `ContactStatus` helpers in `contacts-url.ts` must match `prisma/schema.prisma`. LinkedIn uses `NEW` / `OUTREACHED` in `linkedin-status.ts` (legacy `CONTACTED` maps to `OUTREACHED`).
+- There is no auth; treat every API as admin. Do not expand `/api/debug`.
+
+```ts
+// ❌ BAD
+await sendEmail({ to: draft.contact.email, ... }); // ignores APPROVED + pacing
+
+// ✅ GOOD
+where: { id: { in: draftIds }, status: "APPROVED" }
+```

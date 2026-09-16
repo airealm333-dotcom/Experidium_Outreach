@@ -1,0 +1,24 @@
+---
+description: Where code lives and how to change this outreach CRM
+alwaysApply: true
+---
+
+# Project conventions
+
+Read `project.md` before large changes. This is a Next.js 16 App Router CRM in `Experidium_Outreach`.
+
+- Pages: `src/app/.../page.tsx`. APIs: `src/app/api/.../route.ts`.
+- Integrations (`prisma`, Groq, Resend, Apollo, analytics): `src/lib/`.
+- Shared UI: `src/components/ui` (shadcn). Feature UI stays next to the page.
+- New nav items go in `src/components/nav-config.tsx`.
+- List filters belong in the URL (see `contacts-url.ts`, `linkedin-url.ts`).
+- One vertical slice per change. Do not mix schema, send, and UI redesigns.
+- After schema or API map changes, update `project.md` in the same slice.
+- Never commit `.env`, secrets, or `src/generated/prisma`.
+- Do not run `npm run db:clear` unless the user asked to wipe data.
+- Do not rewrite n8n JSON unless that is the task.
+
+```ts
+// ❌ BAD — new integration inside a page
+// ✅ GOOD — src/lib/apollo-enrich.ts, imported by the route
+```
