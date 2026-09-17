@@ -53,6 +53,20 @@ export function ContactList({
   const router = useRouter();
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [editingContact, setEditingContact] = useState<CampaignContactRow | null>(null);
+  const [companyFilter, setCompanyFilter] = useState("");
+  const [jobTitleFilter, setJobTitleFilter] = useState("");
+
+  const companyOptions = Array.from(
+    new Set(contacts.map((c) => c.companyName).filter((name): name is string => Boolean(name)))
+  ).sort((a, b) => a.localeCompare(b));
+
+  const jobTitleOptions = Array.from(
+    new Set(contacts.map((c) => c.position).filter((title): title is string => Boolean(title)))
+  ).sort((a, b) => a.localeCompare(b));
+
+  const filteredContacts = contacts
+    .filter((c) => !companyFilter || c.companyName === companyFilter)
+    .filter((c) => !jobTitleFilter || c.position === jobTitleFilter);
 
   async function handleRemove(contactId: string, name: string) {
     if (!confirm(`Remove ${name} from this campaign? The contact itself won't be deleted.`)) {
@@ -94,14 +108,60 @@ export function ContactList({
               <TableHead>LinkedIn</TableHead>
               <TableHead>Company</TableHead>
               <TableHead>Company LinkedIn</TableHead>
-              <TableHead>Title</TableHead>
-              <TableHead>Author</TableHead>
+              <TableHead>Job Title</TableHead>
+              <TableHead>Outreach Assigned</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="w-20" />
             </TableRow>
+            <TableRow className="border-border/60 bg-muted/10 hover:bg-muted/10">
+              <TableHead />
+              <TableHead />
+              <TableHead />
+              <TableHead className="py-1.5">
+                <select
+                  value={companyFilter}
+                  onChange={(e) => setCompanyFilter(e.target.value)}
+                  className="h-7 w-full rounded-md border border-input bg-background px-1.5 text-xs font-normal"
+                  aria-label="Filter by company"
+                >
+                  <option value="">All companies</option>
+                  {companyOptions.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+              </TableHead>
+              <TableHead />
+              <TableHead className="py-1.5">
+                <select
+                  value={jobTitleFilter}
+                  onChange={(e) => setJobTitleFilter(e.target.value)}
+                  className="h-7 w-full rounded-md border border-input bg-background px-1.5 text-xs font-normal"
+                  aria-label="Filter by job title"
+                >
+                  <option value="">All job titles</option>
+                  {jobTitleOptions.map((title) => (
+                    <option key={title} value={title}>
+                      {title}
+                    </option>
+                  ))}
+                </select>
+              </TableHead>
+              <TableHead />
+              <TableHead />
+              <TableHead />
+            </TableRow>
           </TableHeader>
           <TableBody>
-            {contacts.map((c, index) => (
+            {filteredContacts.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={9} className="py-6 text-center text-sm text-muted-foreground">
+                  No contacts match this filter.
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredContacts.map((c, index) => (
               <TableRow key={c.id} className="border-border/50">
                 <TableCell className="w-12 text-center tabular-nums text-muted-foreground">
                   {index + 1}
@@ -152,7 +212,8 @@ export function ContactList({
                   </div>
                 </TableCell>
               </TableRow>
-            ))}
+              ))
+            )}
           </TableBody>
         </Table>
       </div>

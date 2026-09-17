@@ -57,12 +57,12 @@ async function readApiError(res: Response) {
 
 export function PeoplePickerDialog({
   campaignId,
-  company,
+  companies,
   open,
   onOpenChange,
 }: {
   campaignId: string;
-  company: PickerCompany | null;
+  companies: PickerCompany[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -114,7 +114,7 @@ export function PeoplePickerDialog({
   }
 
   async function handleSearch() {
-    if (!company) return;
+    if (companies.length === 0) return;
     setSearching(true);
     setError("");
     setSelected(new Set());
@@ -124,7 +124,7 @@ export function PeoplePickerDialog({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          companyIds: [company.companyId],
+          companyIds: companies.map((c) => c.companyId),
           filters: { titles, seniorities, keywords },
         }),
       });
@@ -144,7 +144,7 @@ export function PeoplePickerDialog({
   }
 
   async function handleImportSelected() {
-    if (!results || !company) return;
+    if (!results) return;
     const chosen = results.filter((p) => p.apolloPersonId && selected.has(p.apolloPersonId));
     if (chosen.length === 0) return;
 
@@ -156,7 +156,6 @@ export function PeoplePickerDialog({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           people: chosen,
-          companyId: company.companyId,
           searchCriteria: { titles, seniorities, keywords },
         }),
       });
@@ -198,9 +197,10 @@ export function PeoplePickerDialog({
     >
       <DialogContent className="max-h-[85vh] w-[min(900px,92vw)] max-w-[min(900px,92vw)] sm:!max-w-[min(900px,92vw)] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Pick people at {company?.name}</DialogTitle>
+          <DialogTitle>Pick people</DialogTitle>
           <DialogDescription>
-            Search Apollo for people at this company and import the ones you want.
+            Search Apollo across {companies.length} compan{companies.length === 1 ? "y" : "ies"} in
+            this campaign and import the ones you want.
           </DialogDescription>
         </DialogHeader>
 
@@ -229,7 +229,7 @@ export function PeoplePickerDialog({
 
           {error && <p className="text-sm text-red-600">{error}</p>}
 
-          <Button type="button" onClick={handleSearch} disabled={searching}>
+          <Button type="button" onClick={handleSearch} disabled={searching || companies.length === 0}>
             {searching ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
@@ -274,6 +274,7 @@ export function PeoplePickerDialog({
                           />
                         </TableHead>
                         <TableHead>Name</TableHead>
+                        <TableHead>Company</TableHead>
                         <TableHead>Title</TableHead>
                         <TableHead>Email</TableHead>
                       </TableRow>
@@ -308,6 +309,9 @@ export function PeoplePickerDialog({
                                 </Badge>
                               )}
                             </div>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {p.companyName ?? "—"}
                           </TableCell>
                           <TableCell className="text-muted-foreground">
                             {p.position ?? "—"}

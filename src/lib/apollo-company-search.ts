@@ -63,6 +63,9 @@ export type ApolloCompanyResult = {
 export type ApolloCompanySearchResult = {
   companies: ApolloCompanyResult[];
   fetched: number;
+  page: number;
+  totalPages: number | null;
+  totalEntries: number | null;
   errors: string[];
   debug: { attempts: ApolloDebugAttempt[]; notes: string[] };
 };
@@ -146,6 +149,16 @@ function parseOrganizations(payload: unknown): ApolloOrgResult[] {
   return accounts;
 }
 
+type ApolloPagination = { total_pages?: number; total_entries?: number };
+
+function parsePagination(payload: unknown): ApolloPagination | null {
+  if (!payload || typeof payload !== "object") return null;
+  const p = payload as Record<string, unknown>;
+  return p.pagination && typeof p.pagination === "object"
+    ? (p.pagination as ApolloPagination)
+    : null;
+}
+
 function normalizeOrg(org: ApolloOrgResult): ApolloCompanyResult | null {
   const apolloOrgId = clean(org.id) || clean(org.organization_id);
   const name = clean(org.name);
@@ -220,6 +233,7 @@ export async function searchApolloCompanies(
 
   const variants = buildApolloCompanyPayloadVariants(filters, page, perPage);
   let organizations: ApolloOrgResult[] = [];
+  let pagination: ApolloPagination | null = null;
 
   for (let variantIndex = 0; variantIndex < variants.length; variantIndex++) {
     const apolloPayload = variants[variantIndex];
@@ -263,6 +277,7 @@ export async function searchApolloCompanies(
 
     organizations = parseOrganizations(payload);
     if (organizations.length > 0) {
+      pagination = parsePagination(payload);
       if (variantIndex > 0) {
         errors.push(`Apollo company search needed fallback variant ${variantIndex + 1} to return results.`);
       }
@@ -284,6 +299,9 @@ export async function searchApolloCompanies(
     result: {
       companies: Array.from(uniqueByOrgId.values()),
       fetched: organizations.length,
+      page,
+      totalPages: typeof pagination?.total_pages === "number" ? pagination.total_pages : null,
+      totalEntries: typeof pagination?.total_entries === "number" ? pagination.total_entries : null,
       errors,
       debug: { attempts: debugAttempts, notes: debugNotes },
     },

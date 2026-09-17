@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Building2, Users } from "lucide-react";
+import { Building2, UserSearch, Users } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { CampaignAssigneeSelect } from "../campaign-assignee-select";
 import { CompanySearchPanel } from "./company-search-panel";
@@ -25,7 +26,7 @@ export interface CampaignDetail {
 }
 
 export function CampaignBuilder({ campaign }: { campaign: CampaignDetail }) {
-  const [pickingCompany, setPickingCompany] = useState<CampaignCompanyRow | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   return (
     <div className="space-y-4">
@@ -55,23 +56,36 @@ export function CampaignBuilder({ campaign }: { campaign: CampaignDetail }) {
         <CardContent className="space-y-4">
           <CompanySearchPanel campaignId={campaign.id} />
           <Separator />
-          <CompanyList
-            campaignId={campaign.id}
-            companies={campaign.companies}
-            onPickPeople={setPickingCompany}
-          />
+          <CompanyList campaignId={campaign.id} companies={campaign.companies} />
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-sm">
-            <Users className="h-4 w-4" />
-            Contacts ({campaign.contacts.length})
-          </CardTitle>
-          <CardDescription>
-            People imported from the companies above, via &quot;Pick people&quot;.
-          </CardDescription>
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <Users className="h-4 w-4" />
+                Contacts ({campaign.contacts.length})
+              </CardTitle>
+              <CardDescription>
+                People imported from the companies above, via &quot;Pick people&quot;.
+              </CardDescription>
+            </div>
+            <Button
+              size="sm"
+              disabled={campaign.companies.length === 0}
+              title={
+                campaign.companies.length === 0
+                  ? "Add at least one company first"
+                  : undefined
+              }
+              onClick={() => setPickerOpen(true)}
+            >
+              <UserSearch className="mr-2 h-4 w-4" />
+              Pick people
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <ContactList campaignId={campaign.id} contacts={campaign.contacts} />
@@ -80,11 +94,9 @@ export function CampaignBuilder({ campaign }: { campaign: CampaignDetail }) {
 
       <PeoplePickerDialog
         campaignId={campaign.id}
-        company={pickingCompany}
-        open={pickingCompany !== null}
-        onOpenChange={(open) => {
-          if (!open) setPickingCompany(null);
-        }}
+        companies={campaign.companies.map((c) => ({ companyId: c.companyId, name: c.name }))}
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
       />
     </div>
   );

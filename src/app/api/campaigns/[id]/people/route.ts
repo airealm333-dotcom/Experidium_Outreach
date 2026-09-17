@@ -3,6 +3,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { enrichImportedContacts } from "@/lib/apollo-enrich";
 import { persistImportRows, type ImportRow } from "@/lib/apollo-import-handler";
+import { slugify } from "@/lib/apollo-shared";
 
 export async function POST(
   req: NextRequest,
@@ -12,7 +13,6 @@ export async function POST(
     const { id: campaignId } = await params;
     const body = (await req.json()) as {
       people?: ImportRow[];
-      companyId?: string;
       searchCriteria?: unknown;
     };
 
@@ -33,16 +33,19 @@ export async function POST(
       await persistImportRows(validRows, "import-campaign");
 
     const searchCriteria = body.searchCriteria as Prisma.InputJsonValue | undefined;
-    const companyId = typeof body.companyId === "string" ? body.companyId : undefined;
 
     const campaignContactData = validRows
       .map((r) => {
         const contactId = r.apolloPersonId ? contactIdByApolloId.get(r.apolloPersonId) : undefined;
         if (!contactId) return null;
+        // Derive each row's own company rather than trusting a single
+        // request-wide value — a search/import batch can span multiple
+        // companies now that the picker isn't scoped to just one.
+        const companyId = r.companyName ? `company-${slugify(r.companyName)}` : null;
         return {
           campaignId,
           contactId,
-          companyId: companyId ?? null,
+          companyId,
           wasExisting: !newApolloIds.includes(r.apolloPersonId!),
           ...(searchCriteria !== undefined ? { searchCriteria } : {}),
         };

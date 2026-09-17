@@ -3,6 +3,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/apollo-shared";
 import type { ApolloCompanyResult } from "@/lib/apollo-company-search";
+import { enrichCampaignCompanies } from "@/lib/apollo-company-enrich";
 
 export async function POST(
   req: NextRequest,
@@ -74,10 +75,26 @@ export async function POST(
       skipDuplicates: true,
     });
 
+    // Auto-enrich newly attached companies that don't already have industry
+    // data — never re-enrich (and re-spend a credit on) a company we already
+    // have data for, whether from this campaign or a previous one.
+    const domainByCompanyId = new Map(
+      deduped.map((c) => [`company-${slugify(c.name)}`, c.domain])
+    );
+    const needingEnrichment = await prisma.company.findMany({
+      where: { id: { in: upserted.map((u) => u.companyId) }, industry: null },
+      select: { id: true },
+    });
+    const enrichmentTargets = needingEnrichment
+      .map((c) => ({ companyId: c.id, domain: domainByCompanyId.get(c.id) }))
+      .filter((t): t is { companyId: string; domain: string } => Boolean(t.domain));
+    const enrichment = await enrichCampaignCompanies(enrichmentTargets);
+
     return NextResponse.json({
       attached: result.count,
       alreadyPresent: upserted.length - result.count,
       companyIds: upserted.map((u) => u.companyId),
+      enrichment,
     });
   } catch (error) {
     console.error("Campaign company attach error:", error);

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Building2, Loader2, Search } from "lucide-react";
+import { Building2, ChevronLeft, ChevronRight, Loader2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -50,35 +50,65 @@ export function CompanySearchPanel({ campaignId }: { campaignId: string }) {
   const [locations, setLocations] = useState<string[]>([]);
   const [employeeMin, setEmployeeMin] = useState("");
   const [employeeMax, setEmployeeMax] = useState("");
+  const [perPage, setPerPage] = useState("25");
 
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<ApolloCompanyResult[] | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState<number | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selectedData, setSelectedData] = useState<Map<string, ApolloCompanyResult>>(new Map());
   const [error, setError] = useState("");
   const [adding, setAdding] = useState(false);
 
   const selectable = (results ?? []).filter((c) => !c.alreadyInCampaign);
-  const allSelected = selectable.length > 0 && selected.size === selectable.length;
-  const someSelected = selected.size > 0 && selected.size < selectable.length;
+  const allSelected =
+    selectable.length > 0 && selectable.every((c) => selected.has(c.apolloOrgId));
+  const someSelected =
+    !allSelected && selectable.some((c) => selected.has(c.apolloOrgId));
 
   function toggleAll() {
     if (allSelected) {
-      setSelected(new Set());
+      setSelected((prev) => {
+        const next = new Set(prev);
+        selectable.forEach((c) => next.delete(c.apolloOrgId));
+        return next;
+      });
+      setSelectedData((prev) => {
+        const next = new Map(prev);
+        selectable.forEach((c) => next.delete(c.apolloOrgId));
+        return next;
+      });
     } else {
-      setSelected(new Set(selectable.map((c) => c.apolloOrgId)));
+      setSelected((prev) => {
+        const next = new Set(prev);
+        selectable.forEach((c) => next.add(c.apolloOrgId));
+        return next;
+      });
+      setSelectedData((prev) => {
+        const next = new Map(prev);
+        selectable.forEach((c) => next.set(c.apolloOrgId, c));
+        return next;
+      });
     }
   }
 
-  function toggleOne(apolloOrgId: string) {
+  function toggleOne(company: ApolloCompanyResult) {
     setSelected((prev) => {
       const next = new Set(prev);
-      if (next.has(apolloOrgId)) next.delete(apolloOrgId);
-      else next.add(apolloOrgId);
+      if (next.has(company.apolloOrgId)) next.delete(company.apolloOrgId);
+      else next.add(company.apolloOrgId);
+      return next;
+    });
+    setSelectedData((prev) => {
+      const next = new Map(prev);
+      if (next.has(company.apolloOrgId)) next.delete(company.apolloOrgId);
+      else next.set(company.apolloOrgId, company);
       return next;
     });
   }
 
-  async function handleSearch() {
+  async function runSearch(targetPage: number) {
     const parsedMin = employeeMin ? Number.parseInt(employeeMin, 10) : undefined;
     const parsedMax = employeeMax ? Number.parseInt(employeeMax, 10) : undefined;
 
@@ -89,12 +119,14 @@ export function CompanySearchPanel({ campaignId }: { campaignId: string }) {
 
     setSearching(true);
     setError("");
-    setSelected(new Set());
     try {
+      const parsedPerPage = Math.min(100, Math.max(1, Number.parseInt(perPage, 10) || 25));
       const res = await fetch(`/api/campaigns/${campaignId}/companies/search`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          page: targetPage,
+          perPage: parsedPerPage,
           filters: {
             keywords,
             locations,
@@ -108,8 +140,13 @@ export function CompanySearchPanel({ campaignId }: { campaignId: string }) {
         setResults(null);
         return;
       }
-      const data = (await res.json()) as { companies: ApolloCompanyResult[] };
+      const data = (await res.json()) as {
+        companies: ApolloCompanyResult[];
+        totalPages: number | null;
+      };
       setResults(data.companies);
+      setPage(targetPage);
+      setTotalPages(data.totalPages ?? null);
     } catch {
       setError("Network error");
       setResults(null);
@@ -118,9 +155,19 @@ export function CompanySearchPanel({ campaignId }: { campaignId: string }) {
     }
   }
 
+  async function handleSearch() {
+    setSelected(new Set());
+    setSelectedData(new Map());
+    await runSearch(1);
+  }
+
+  async function goToPage(target: number) {
+    if (target < 1 || searching) return;
+    await runSearch(target);
+  }
+
   async function handleAddSelected() {
-    if (!results) return;
-    const chosen = results.filter((c) => selected.has(c.apolloOrgId));
+    const chosen = Array.from(selectedData.values());
     if (chosen.length === 0) return;
 
     setAdding(true);
@@ -146,6 +193,7 @@ export function CompanySearchPanel({ campaignId }: { campaignId: string }) {
           : prev
       );
       setSelected(new Set());
+      setSelectedData(new Map());
       router.refresh();
     } catch {
       setError("Network error");
@@ -188,6 +236,18 @@ export function CompanySearchPanel({ campaignId }: { campaignId: string }) {
               onChange={(e) => setEmployeeMax(e.target.value)}
             />
           </div>
+        </div>
+        <div className="rounded-lg border bg-muted/20 p-4">
+          <label className="text-base font-semibold">Number of companies to load</label>
+          <p className="mt-1 text-sm text-muted-foreground">Up to 100 per search.</p>
+          <Input
+            type="number"
+            min={1}
+            max={100}
+            value={perPage}
+            onChange={(e) => setPerPage(e.target.value)}
+            className="mt-2"
+          />
         </div>
       </div>
 
@@ -234,7 +294,7 @@ export function CompanySearchPanel({ campaignId }: { campaignId: string }) {
                         <Checkbox
                           checked={c.alreadyInCampaign || selected.has(c.apolloOrgId)}
                           disabled={c.alreadyInCampaign}
-                          onCheckedChange={() => toggleOne(c.apolloOrgId)}
+                          onCheckedChange={() => toggleOne(c)}
                           aria-label={`Select ${c.name}`}
                         />
                       </TableCell>
@@ -265,6 +325,35 @@ export function CompanySearchPanel({ campaignId }: { campaignId: string }) {
             </div>
           )}
 
+          {results.length > 0 && (
+            <div className="flex items-center justify-between gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={page <= 1 || searching}
+                onClick={() => goToPage(page - 1)}
+              >
+                <ChevronLeft className="mr-1 h-3.5 w-3.5" />
+                Previous
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                Page {page}
+                {totalPages != null ? ` of ${totalPages}` : ""}
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={searching || (totalPages != null && page >= totalPages)}
+                onClick={() => goToPage(page + 1)}
+              >
+                Next
+                <ChevronRight className="ml-1 h-3.5 w-3.5" />
+              </Button>
+            </div>
+          )}
+
           {selected.size > 0 && (
             <div className="flex items-center gap-3 rounded-lg border bg-muted/50 p-3">
               <span className="text-sm font-medium">
@@ -277,7 +366,10 @@ export function CompanySearchPanel({ campaignId }: { campaignId: string }) {
                 Add to campaign
               </Button>
               <button
-                onClick={() => setSelected(new Set())}
+                onClick={() => {
+                  setSelected(new Set());
+                  setSelectedData(new Map());
+                }}
                 className="ml-auto text-xs text-muted-foreground hover:text-foreground"
               >
                 Clear selection
