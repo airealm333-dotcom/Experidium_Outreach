@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, type KeyboardEvent } from "react"
 import { Combobox } from "@base-ui/react/combobox"
 import { CheckIcon, ChevronDownIcon, XIcon } from "lucide-react"
 
@@ -8,29 +9,81 @@ export interface MultiSelectOption {
   label: string
 }
 
+function optionFor(value: string, options: MultiSelectOption[]): MultiSelectOption {
+  return options.find((o) => o.value === value) ?? { value, label: value }
+}
+
 export function MultiSelect({
   label,
   options,
   values,
   onChange,
   placeholder,
+  allowCustom = false,
 }: {
   label?: string
   options: MultiSelectOption[]
   values: string[]
   onChange: (next: string[]) => void
   placeholder?: string
+  /** When true, typing a value and pressing Enter / comma adds it even if not in the list. */
+  allowCustom?: boolean
 }) {
-  const selectedOptions = options.filter((o) => values.includes(o.value))
+  const [inputValue, setInputValue] = useState("")
+
+  const selectedOptions = values.map((v) => optionFor(v, options))
+
+  const known = new Set(options.map((o) => o.value.toLowerCase()))
+  const customOptions = values
+    .filter((v) => !known.has(v.toLowerCase()))
+    .map((v) => ({ value: v, label: v }))
+  const items = customOptions.length > 0 ? [...options, ...customOptions] : options
+
+  function addFromInput() {
+    const trimmed = inputValue.trim()
+    if (!trimmed) return false
+
+    const match = items.find(
+      (o) =>
+        o.value.toLowerCase() === trimmed.toLowerCase() ||
+        o.label.toLowerCase() === trimmed.toLowerCase()
+    )
+
+    if (match) {
+      if (!values.includes(match.value)) onChange([...values, match.value])
+      setInputValue("")
+      return true
+    }
+
+    if (allowCustom) {
+      const already = values.some((v) => v.toLowerCase() === trimmed.toLowerCase())
+      if (!already) onChange([...values, trimmed])
+      setInputValue("")
+      return true
+    }
+
+    return false
+  }
+
+  function onInputKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+    if (e.key !== "Enter" && e.key !== ",") return
+    if (!inputValue.trim()) return
+    if (addFromInput()) {
+      e.preventDefault()
+      e.stopPropagation()
+    }
+  }
 
   return (
     <div className="rounded-lg border bg-muted/20 p-4">
       {label && <label className="text-base font-semibold">{label}</label>}
       <Combobox.Root
-        items={options}
+        items={items}
         multiple
         value={selectedOptions}
         onValueChange={(next) => onChange(next.map((o) => o.value))}
+        inputValue={inputValue}
+        onInputValueChange={(next) => setInputValue(next)}
         isItemEqualToValue={(item, value) => item.value === value.value}
       >
         <div className="mt-1 flex min-h-11 items-center gap-1.5 rounded-lg border border-input bg-transparent px-2 py-1.5">
@@ -41,7 +94,10 @@ export function MultiSelect({
                 className="flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-sm text-secondary-foreground"
               >
                 {o.label}
-                <Combobox.ChipRemove className="cursor-pointer">
+                <Combobox.ChipRemove
+                  className="ml-0.5 inline-flex h-4 w-4 cursor-pointer items-center justify-center rounded-full hover:bg-foreground/15"
+                  aria-label={`Remove ${o.label}`}
+                >
                   <XIcon className="h-3 w-3" />
                 </Combobox.ChipRemove>
               </Combobox.Chip>
@@ -49,8 +105,17 @@ export function MultiSelect({
             <Combobox.Input
               placeholder={selectedOptions.length === 0 ? placeholder : undefined}
               className="min-w-[6rem] flex-1 bg-transparent text-base outline-none"
+              onKeyDown={onInputKeyDown}
             />
           </Combobox.Chips>
+          {values.length > 0 ? (
+            <Combobox.Clear
+              aria-label={label ? `Clear all ${label}` : "Clear all selected"}
+              className="flex shrink-0 items-center justify-center rounded p-1 text-muted-foreground outline-none hover:bg-muted hover:text-foreground"
+            >
+              <XIcon className="h-4 w-4" />
+            </Combobox.Clear>
+          ) : null}
           <Combobox.Trigger
             aria-label={label ? `Toggle ${label} options` : "Toggle options"}
             className="flex shrink-0 items-center justify-center rounded p-1 text-muted-foreground outline-none hover:bg-muted hover:text-foreground"
@@ -64,7 +129,9 @@ export function MultiSelect({
           <Combobox.Positioner className="isolate z-50" sideOffset={4}>
             <Combobox.Popup className="max-h-64 w-(--anchor-width) overflow-y-auto rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10">
               <Combobox.Empty className="px-2 py-1.5 text-sm text-muted-foreground">
-                No matches
+                {allowCustom
+                  ? "No matches — press Enter to add"
+                  : "No matches"}
               </Combobox.Empty>
               <Combobox.List>
                 {(item: MultiSelectOption) => (

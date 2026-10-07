@@ -9,10 +9,9 @@ import {
   uniqueList,
 } from "@/lib/apollo-shared";
 
-// Apollo's organization/company search endpoint. This repo has never called
-// a company-search endpoint before (only mixed_people/search) — if Apollo
-// changes/renames this, `organizations/search` is the documented fallback.
-const APOLLO_COMPANY_BASE_URL = "https://api.apollo.io/api/v1/mixed_companies/search";
+// Prefer organizations/search — mixed_companies/search returns thin org rows
+// without industry / employee / location fields needed for the campaign UI.
+const APOLLO_COMPANY_BASE_URL = "https://api.apollo.io/api/v1/organizations/search";
 const DEFAULT_PAGE = 1;
 const DEFAULT_PER_PAGE = 25;
 const MAX_PER_PAGE = 100;
@@ -41,10 +40,12 @@ type ApolloOrgResult = {
   primary_domain?: string | null;
   linkedin_url?: string | null;
   industry?: string | null;
+  industries?: string[] | null;
   short_description?: string | null;
-  estimated_num_employees?: number | null;
+  estimated_num_employees?: number | string | null;
   country?: string | null;
   state?: string | null;
+  city?: string | null;
 };
 
 export type ApolloCompanyResult = {
@@ -58,6 +59,7 @@ export type ApolloCompanyResult = {
   employeeCount: number | null;
   country: string | null;
   state: string | null;
+  city: string | null;
 };
 
 export type ApolloCompanySearchResult = {
@@ -159,10 +161,24 @@ function parsePagination(payload: unknown): ApolloPagination | null {
     : null;
 }
 
+function parseEmployeeCount(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim()) {
+    const n = Number.parseInt(value.replace(/,/g, ""), 10);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
+
 function normalizeOrg(org: ApolloOrgResult): ApolloCompanyResult | null {
   const apolloOrgId = clean(org.id) || clean(org.organization_id);
   const name = clean(org.name);
   if (!apolloOrgId || !name) return null;
+
+  const industryFromList =
+    Array.isArray(org.industries) && org.industries.length > 0
+      ? clean(org.industries[0])
+      : null;
 
   return {
     apolloOrgId,
@@ -170,12 +186,12 @@ function normalizeOrg(org: ApolloOrgResult): ApolloCompanyResult | null {
     website: clean(org.website_url) ?? null,
     domain: clean(org.primary_domain) ?? null,
     linkedinUrl: clean(org.linkedin_url) ?? null,
-    industry: clean(org.industry) ?? null,
+    industry: clean(org.industry) ?? industryFromList ?? null,
     description: clean(org.short_description) ?? null,
-    employeeCount:
-      typeof org.estimated_num_employees === "number" ? org.estimated_num_employees : null,
+    employeeCount: parseEmployeeCount(org.estimated_num_employees),
     country: clean(org.country) ?? null,
     state: clean(org.state) ?? null,
+    city: clean(org.city) ?? null,
   };
 }
 

@@ -15,8 +15,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { TagInput } from "@/components/apollo-import/tag-input";
 import { MultiSelect } from "@/components/ui/multi-select";
+import { APOLLO_COMPANY_KEYWORDS } from "@/lib/apollo-company-keywords";
 import { COUNTRIES } from "@/lib/countries";
 
 interface ApolloCompanyResult {
@@ -30,6 +30,7 @@ interface ApolloCompanyResult {
   employeeCount: number | null;
   country: string | null;
   state: string | null;
+  city: string | null;
   alreadyInCampaign: boolean;
 }
 
@@ -205,11 +206,13 @@ export function CompanySearchPanel({ campaignId }: { campaignId: string }) {
   return (
     <div className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2">
-        <TagInput
+        <MultiSelect
           label="Keywords"
+          options={APOLLO_COMPANY_KEYWORDS}
           values={keywords}
           onChange={setKeywords}
-          placeholder="e.g. fintech, consulting, mining"
+          placeholder="Search or type & Enter..."
+          allowCustom
         />
         <MultiSelect
           label="Locations (countries)"
@@ -313,10 +316,12 @@ export function CompanySearchPanel({ campaignId }: { campaignId: string }) {
                         {c.industry ?? "—"}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {c.employeeCount ?? "—"}
+                        {c.employeeCount != null
+                          ? c.employeeCount.toLocaleString()
+                          : "—"}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {[c.country, c.state].filter(Boolean).join(", ") || "—"}
+                        {[c.city, c.state, c.country].filter(Boolean).join(", ") || "—"}
                       </TableCell>
                     </TableRow>
                   ))}

@@ -1,0 +1,85 @@
+import type { MultiSelectOption } from "@/components/ui/multi-select";
+
+/**
+ * Curated Apollo company keyword suggestions (ICP / supply-chain focused).
+ * Values are sent as-is in company search filters.
+ */
+const KEYWORD_LABELS = [
+  // Profile / domain keywords (Apollo ICP)
+  "supply chain",
+  "procurement",
+  "inventory management",
+  "demand planning",
+  "logistics",
+  "operations management",
+  "supplier management",
+  "warehouse",
+  "distribution",
+  "OTIF",
+  "S&OP",
+  "ERP implementation",
+  // Industries / verticals
+  "manufacturing",
+  "wholesale",
+  "import and export",
+  "consumer goods",
+  "industrial machinery",
+  "food and beverages",
+  "apparel and fashion",
+  "plastics",
+  "electronics manufacturing",
+  "packaging",
+  "automotive",
+  "chemicals",
+  // Related ops terms
+  "sourcing",
+  "fulfillment",
+  "freight",
+  "3PL",
+  "inventory",
+  "materials management",
+  "production planning",
+  "warehouse management",
+  "order management",
+  "transportation",
+  "cold chain",
+  // Tech often co-searched
+  "SAP",
+  "Oracle",
+  "NetSuite",
+  "Microsoft Dynamics",
+  // Supply chain consulting / advisory
+  "supply chain consulting",
+  "supply chain advisory",
+  "operations consulting",
+  "management consulting",
+  "logistics consulting",
+  "procurement consulting",
+  "inventory consulting",
+  "supply chain transformation",
+  "digital supply chain",
+  "supply chain strategy",
+  "supply chain optimization",
+  "network optimization",
+  "cost reduction",
+  "process improvement",
+  "lean manufacturing",
+  "six sigma",
+  "business process outsourcing",
+  "BPO",
+  "systems integration",
+  "ERP consulting",
+  "SAP consulting",
+  "change management",
+  "operational excellence",
+  "end-to-end supply chain",
+  "supply chain resilience",
+  "value chain",
+  "consulting firm",
+  "advisory services",
+] as const;
+
+export const APOLLO_COMPANY_KEYWORDS: MultiSelectOption[] = KEYWORD_LABELS.map((keyword) => ({
+  value: keyword,
+  label: keyword,
+}));

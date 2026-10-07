@@ -22,8 +22,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { TagInput } from "@/components/apollo-import/tag-input";
 import { MultiSelect } from "@/components/ui/multi-select";
+import { APOLLO_JOB_TITLES } from "@/lib/apollo-job-titles";
 import { APOLLO_SENIORITIES } from "@/lib/apollo-seniorities";
 
 interface ApolloPersonResult {
@@ -69,7 +69,6 @@ export function PeoplePickerDialog({
   const router = useRouter();
   const [titles, setTitles] = useState<string[]>([]);
   const [seniorities, setSeniorities] = useState<string[]>([]);
-  const [keywords, setKeywords] = useState<string[]>([]);
 
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<ApolloPersonResult[] | null>(null);
@@ -89,7 +88,6 @@ export function PeoplePickerDialog({
   function reset() {
     setTitles([]);
     setSeniorities([]);
-    setKeywords([]);
     setResults(null);
     setSelected(new Set());
     setError("");
@@ -125,7 +123,7 @@ export function PeoplePickerDialog({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           companyIds: companies.map((c) => c.companyId),
-          filters: { titles, seniorities, keywords },
+          filters: { titles, seniorities },
         }),
       });
       if (!res.ok) {
@@ -156,7 +154,7 @@ export function PeoplePickerDialog({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           people: chosen,
-          searchCriteria: { titles, seniorities, keywords },
+          searchCriteria: { titles, seniorities },
         }),
       });
       if (!res.ok) {
@@ -205,12 +203,14 @@ export function PeoplePickerDialog({
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="grid gap-3 sm:grid-cols-3">
-            <TagInput
+          <div className="grid gap-3 sm:grid-cols-2">
+            <MultiSelect
               label="Job titles"
+              options={APOLLO_JOB_TITLES}
               values={titles}
               onChange={setTitles}
-              placeholder="e.g. VP Sales"
+              placeholder="Search or type & Enter..."
+              allowCustom
             />
             <MultiSelect
               label="Seniorities"
@@ -218,12 +218,7 @@ export function PeoplePickerDialog({
               values={seniorities}
               onChange={setSeniorities}
               placeholder="Search seniority..."
-            />
-            <TagInput
-              label="Keywords"
-              values={keywords}
-              onChange={setKeywords}
-              placeholder="e.g. growth"
+              allowCustom
             />
           </div>
 

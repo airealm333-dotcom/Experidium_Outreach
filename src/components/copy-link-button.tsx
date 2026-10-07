@@ -4,7 +4,13 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, Copy } from "lucide-react";
 
-export function CopyLinkButton({ url }: { url: string | null | undefined }) {
+export function CopyLinkButton({
+  url,
+  label = "Copy link",
+}: {
+  url: string | null | undefined;
+  label?: string;
+}) {
   const [copied, setCopied] = useState(false);
 
   if (!url?.trim()) {
@@ -12,13 +18,13 @@ export function CopyLinkButton({ url }: { url: string | null | undefined }) {
   }
 
   async function handleCopy() {
-    const link = url!.trim();
+    const value = url!.trim();
     try {
-      await navigator.clipboard.writeText(link);
+      await navigator.clipboard.writeText(value);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
-      window.prompt("Copy this link:", link);
+      window.prompt(`Copy this:`, value);
     }
   }
 
@@ -27,7 +33,7 @@ export function CopyLinkButton({ url }: { url: string | null | undefined }) {
       type="button"
       variant="outline"
       size="sm"
-      className="h-7 gap-1.5 px-2 text-xs"
+      className="h-7 gap-1.5 px-2 text-xs shrink-0"
       onClick={handleCopy}
       title={url}
     >
@@ -39,7 +45,7 @@ export function CopyLinkButton({ url }: { url: string | null | undefined }) {
       ) : (
         <>
           <Copy className="h-3.5 w-3.5 shrink-0" />
-          Copy link
+          {label}
         </>
       )}
     </Button>
